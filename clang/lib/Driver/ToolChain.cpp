@@ -50,6 +50,7 @@ using namespace driver;
 using namespace tools;
 using namespace llvm;
 using namespace llvm::opt;
+using namespace llvm::sys::path;
 
 static llvm::opt::Arg *GetRTTIArgument(const ArgList &Args) {
   return Args.getLastArg(options::OPT_mkernel, options::OPT_fapple_kext,
@@ -195,10 +196,30 @@ static const DriverSuffix *FindDriverSuffix(StringRef ProgName, size_t &Pos) {
   return nullptr;
 }
 
+// The original version of this does not handle our Darwin cross-compiler names
+// (x86_64-apple-darwin13.4.0-clang++) properly.  This is because the final dot
+// preceeds the most useful bit (-clang++) which distinguishes between  C / C++
+// I assume the intention of llvm::sys::path::stem is to strip off ".exe" here?
+StringRef program_name_stem(StringRef path) {
+  StringRef fname = llvm::sys::path::filename(path);
+  size_t pos = StringRef::npos;
+  if (fname.endswith_insensitive(".exe")) {
+    pos = fname.find_last_of('.');
+  }
+  if (pos == StringRef::npos)
+    return fname;
+  else
+    if ((fname.size() == 1 && fname == ".") ||
+        (fname.size() == 2 && fname == ".."))
+      return fname;
+    else
+      return fname.substr(0, pos);
+}
+
 /// Normalize the program name from argv[0] by stripping the file extension if
 /// present and lower-casing the string on Windows.
 static std::string normalizeProgramName(llvm::StringRef Argv0) {
-  std::string ProgName = std::string(llvm::sys::path::stem(Argv0));
+  std::string ProgName = std::string(program_name_stem(Argv0));
   if (is_style_windows(llvm::sys::path::Style::native)) {
     // Transform to lowercase for case insensitive file systems.
     std::transform(ProgName.begin(), ProgName.end(), ProgName.begin(),
