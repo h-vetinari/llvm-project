@@ -1270,8 +1270,13 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
       CompilerPath = Split.second;
     }
   }
-  if (const Arg *A = Args.getLastArg(options::OPT__sysroot_EQ))
-    SysRoot = A->getValue();
+  if (Optional<std::string> CondaBuildSysrootValue =
+          llvm::sys::Process::GetEnv("CONDA_BUILD_SYSROOT")) {
+    SysRoot = *CondaBuildSysrootValue;
+  } else {
+    if (const Arg *A = Args.getLastArg(options::OPT__sysroot_EQ))
+      SysRoot = A->getValue();
+  }
   if (const Arg *A = Args.getLastArg(options::OPT__dyld_prefix_EQ))
     DyldPrefix = A->getValue();
 
