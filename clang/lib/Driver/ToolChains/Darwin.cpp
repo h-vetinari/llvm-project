@@ -28,6 +28,17 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include <cstdlib> // ::getenv
 
+// Extra includes for conda patch
+#include <cstdio>
+#include <memory>
+#include <string>
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Program.h"
+
 using namespace clang::driver;
 using namespace clang::driver::tools;
 using namespace clang::driver::toolchains;
@@ -1842,14 +1853,74 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     if (!getVFS().exists(A->getValue()))
       getDriver().Diag(clang::diag::warn_missing_sysroot) << A->getValue();
   } else {
+    std::string foundSDKPath = "/";
+    std::string prefixToTry = "/";
+
     if (char *env = ::getenv("SDKROOT")) {
       // We only use this value as the default if it is an absolute path,
       // exists, and it is not the root path.
       if (llvm::sys::path::is_absolute(env) && getVFS().exists(env) &&
           StringRef(env) != "/") {
-        Args.append(Args.MakeSeparateArg(
-            nullptr, Opts.getOption(options::OPT_isysroot), env));
+        foundSDKPath = std::string(env);
       }
+    }
+
+    if (foundSDKPath == "/") {
+      if (char *env = ::getenv("CONDA_BUILD_SYSROOT")) {
+        // We only use this value as the default if it is an absolute path,
+        // exists, and it is not the root path.
+        if (llvm::sys::path::is_absolute(env) && getVFS().exists(env) &&
+            StringRef(env) != "/") {
+          foundSDKPath = std::string(env);
+        }
+      }
+    }
+
+    // If the SDK is not found by now and it's not inside /, our only choice
+    // is to fail or ask Apple CLI utilities for help
+    if (foundSDKPath == "/" && !getVFS().exists("/usr/include/sys/types.h")) {
+
+      auto pathFromExecutable = [](llvm::ArrayRef<llvm::StringRef> Argv)
+          -> Optional<std::string> {
+        // Inspired by clang-tools-extra/clangd/CompileCommands.cpp
+        auto Exe = llvm::sys::findProgramByName(Argv[0]);
+        if (!Exe) {
+          return None;
+        }
+        llvm::SmallString<64> OutFile;
+        llvm::sys::fs::createTemporaryFile("darwin-adddeploymenttarget", "",
+                                           OutFile);
+        llvm::FileRemover OutRemover(OutFile);
+        Optional<llvm::StringRef> Redirects[3] = {
+            /*stdin=*/{""}, /*stdout=*/{OutFile.str()}, /*stderr=*/{""}};
+        int Ret = llvm::sys::ExecuteAndWait(*Exe, Argv,
+                                            /*Env=*/None, Redirects,
+                                            /*SecondsToWait=*/10);
+        if (Ret != 0) {
+          return None;
+        }
+
+        auto Buf = llvm::MemoryBuffer::getFile(OutFile);
+        if (!Buf) {
+          return None;
+        }
+        llvm::StringRef Path = Buf->get()->getBuffer().trim();
+        if (Path.empty()) {
+          return None;
+        }
+        return Path.str();
+      };
+
+      auto XcrunPath = pathFromExecutable({"xcrun", "--show-sdk-path"});
+      if (foundSDKPath == "/" && XcrunPath &&
+          getVFS().exists(XcrunPath.getValue() + "/usr/include/sys/types.h")) {
+        foundSDKPath = XcrunPath.getValue();
+      }
+    }
+
+    if (foundSDKPath != "/") {
+      Args.append(Args.MakeSeparateArg(
+          nullptr, Opts.getOption(options::OPT_isysroot), foundSDKPath));
     }
   }
 
