@@ -21,6 +21,13 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <sys/mman.h>
+/* MAP_ANONYMOUS is MAP_ANON on some systems,
+   e.g. OS X (before Sierra), OpenBSD etc */
+#if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 namespace __xray {
 
 /// BufferQueue implements a circular queue of fixed sized buffers (much like a
