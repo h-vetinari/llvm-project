@@ -24,6 +24,39 @@
 #include <zircon/types.h>
 #endif
 
+#if defined __APPLE__
+#include <time.h>
+#include <mach/clock.h>
+#include <mach/mach.h>
+
+#if defined __APPLE__ && __x86_64__ && __MAC_OS_X_VERSION_MIN_REQUIRED < 101200 // less than macOS 10.12
+  #define clock_gettime alt_clock_gettime
+#endif
+#if defined __APPLE__ && __MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+  #define CLOCK_REALTIME CALENDAR_CLOCK
+  #define CLOCK_MONOTONIC SYSTEM_CLOCK
+  typedef int clockid_t;
+#endif
+
+int alt_clock_gettime(clockid_t clock_id, timespec *ts) {
+  clock_serv_t cclock;
+  mach_timespec_t mts;
+  host_get_clock_service(mach_host_self(), clock_id, &cclock);
+  clock_get_time(cclock, &mts);
+  mach_port_deallocate(mach_task_self(), cclock);
+  ts->tv_sec = mts.tv_sec;
+  ts->tv_nsec = mts.tv_nsec;
+  return 0;
+}
+#include <sys/mman.h>
+/* MAP_ANONYMOUS is MAP_ANON on some systems,
+   e.g. OS X (before Sierra), OpenBSD etc */
+#if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
+#endif
+
 namespace __xray {
 
 class LogWriter {
