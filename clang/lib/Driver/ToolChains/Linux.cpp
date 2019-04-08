@@ -394,6 +394,14 @@ std::string Linux::computeSysRoot() const {
   if (getVFS().exists(Path))
     return Path;
 
+  Path =
+      (InstallDir + "/../../../../" + TripleStr + "/sysroot")
+          .str();
+
+  if (getVFS().exists(Path))
+    return Path;
+
+
   Path = (InstallDir + "/../../../../sysroot" + Multilib.osSuffix()).str();
 
   if (getVFS().exists(Path))
