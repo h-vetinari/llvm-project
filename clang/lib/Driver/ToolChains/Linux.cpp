@@ -361,7 +361,7 @@ std::string Linux::computeSysRoot() const {
       return AndroidSysRootPath;
   }
 
-  if (!GCCInstallation.isValid() || !getTriple().isMIPS())
+  if (!GCCInstallation.isValid())
     return std::string();
 
   // Standalone MIPS toolchains use different names for sysroot folder
@@ -378,6 +378,14 @@ std::string Linux::computeSysRoot() const {
 
   if (getVFS().exists(Path))
     return Path;
+
+  Path =
+      (InstallDir + "/../../../../" + TripleStr + "/sysroot")
+          .str();
+
+  if (getVFS().exists(Path))
+    return Path;
+
 
   Path = (InstallDir + "/../../../../sysroot" + Multilib.osSuffix()).str();
 
