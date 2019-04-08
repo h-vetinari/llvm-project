@@ -370,18 +370,30 @@ std::string Linux::computeSysRoot() const {
     return std::string();
   }
 
-  if (!GCCInstallation.isValid() || !getTriple().isMIPS())
+  if (!GCCInstallation.isValid())
+    return std::string();
+
+  // Check for conda layout
+  const StringRef InstallDir = GCCInstallation.getInstallPath();
+  const StringRef TripleStr = GCCInstallation.getTriple().str();
+
+  std::string Path =
+      (InstallDir + "/../../../../" + TripleStr + "/sysroot")
+          .str();
+
+  if (getVFS().exists(Path))
+    return Path;
+
+  if (!getTriple().isMIPS())
     return std::string();
 
   // Standalone MIPS toolchains use different names for sysroot folder
   // and put it into different places. Here we try to check some known
   // variants.
 
-  const StringRef InstallDir = GCCInstallation.getInstallPath();
-  const StringRef TripleStr = GCCInstallation.getTriple().str();
   const Multilib &Multilib = GCCInstallation.getMultilib();
 
-  std::string Path =
+  Path =
       (InstallDir + "/../../../../" + TripleStr + "/libc" + Multilib.osSuffix())
           .str();
 
