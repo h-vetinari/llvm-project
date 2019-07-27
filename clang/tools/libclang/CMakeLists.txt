@@ -170,6 +170,11 @@ if(ENABLE_SHARED)
 
     set_property(TARGET libclang APPEND_STRING PROPERTY
                  LINK_FLAGS ${LIBCLANG_LINK_FLAGS})
+    set_target_properties(libclang
+      PROPERTIES
+      VERSION ${LIBCLANG_LIBRARY_VERSION}
+      SOVERSION ${LIBCLANG_LIBRARY_VERSION}
+    )
   else()
     set_target_properties(libclang
       PROPERTIES
