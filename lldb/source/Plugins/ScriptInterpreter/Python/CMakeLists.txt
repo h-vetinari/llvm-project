@@ -35,7 +35,6 @@ add_lldb_library(lldbPluginScriptInterpreterPython PLUGIN
     lldbTarget
     lldbValueObject
     lldbPluginScriptInterpreterPythonInterfaces
-    ${Python3_LIBRARIES}
     ${LLDB_LIBEDIT_LIBS}
 
   LINK_COMPONENTS
