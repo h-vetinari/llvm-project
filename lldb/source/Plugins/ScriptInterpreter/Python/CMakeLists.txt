@@ -29,7 +29,6 @@ add_lldb_library(lldbPluginScriptInterpreterPython PLUGIN
     lldbHost
     lldbInterpreter
     lldbTarget
-    ${Python3_LIBRARIES}
     ${LLDB_LIBEDIT_LIBS}
 
   LINK_COMPONENTS
