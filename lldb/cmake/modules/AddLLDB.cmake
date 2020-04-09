@@ -161,6 +161,9 @@ function(add_lldb_executable name)
   endif()
 
   list(APPEND LLVM_LINK_COMPONENTS ${ARG_LINK_COMPONENTS})
+  if (NOT MSVC)
+    list(APPEND LLVM_LINK_COMPONENTS ${Python3_LIBRARIES})
+  endif()
   add_llvm_executable(${name}
     ${pass_NO_INSTALL_RPATH}
     ${ARG_UNPARSED_ARGUMENTS}
