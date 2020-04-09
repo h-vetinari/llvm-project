@@ -179,6 +179,12 @@ if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
 endif()
 
 if (NOT MSVC)
+  target_link_libraries(liblldb INTERFACE ${PYTHON_LIBRARIES})
+  if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
+    target_link_options(liblldb PRIVATE -undefined dynamic_lookup)
+  else()
+    target_link_options(liblldb PRIVATE "-Wl,--unresolved-symbols=ignore-all")
+  endif()
   set_target_properties(liblldb
     PROPERTIES
     OUTPUT_NAME lldb
