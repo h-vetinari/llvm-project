@@ -25,6 +25,8 @@ class TestingConfig(object):
             "LD_LIBRARY_PATH",
             "SYSTEMROOT",
             "TERM",
+            "QEMU_LD_PREFIX",
+            "SDKROOT",
             "CLANG",
             "LLDB",
             "LD_PRELOAD",
