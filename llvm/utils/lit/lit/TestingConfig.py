@@ -21,7 +21,7 @@ class TestingConfig(object):
             'LLVM_DISABLE_CRASH_REPORT' : '1',
             }
 
-        pass_vars = ['LIBRARY_PATH', 'LD_LIBRARY_PATH', 'SYSTEMROOT', 'TERM',
+        pass_vars = ['LIBRARY_PATH', 'LD_LIBRARY_PATH', 'SYSTEMROOT', 'TERM', 'QEMU_LD_PREFIX', 'SDKROOT',
                      'CLANG', 'LLDB', 'LD_PRELOAD', 'ASAN_OPTIONS',
                      'UBSAN_OPTIONS', 'LSAN_OPTIONS', 'ADB', 'ANDROID_SERIAL',
                      'SSH_AUTH_SOCK', 'SANITIZER_IGNORE_CVE_2016_2143',
