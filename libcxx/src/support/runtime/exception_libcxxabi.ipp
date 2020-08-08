@@ -17,11 +17,7 @@ bool uncaught_exception() noexcept { return uncaught_exceptions() > 0; }
 
 int uncaught_exceptions() noexcept
 {
-# if _LIBCPPABI_VERSION > 1001
-    return __cxa_uncaught_exceptions();
-# else
     return __cxa_uncaught_exception() ? 1 : 0;
-# endif
 }
 
 } // namespace std
