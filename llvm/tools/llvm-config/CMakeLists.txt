@@ -5,6 +5,7 @@ set(BUILDVARIABLES_OBJPATH ${CMAKE_CURRENT_BINARY_DIR}/BuildVariables.inc)
 
 # Add the llvm-config tool.
 add_llvm_tool(llvm-config
+  DISABLE_LLVM_LINK_LLVM_DYLIB
   llvm-config.cpp
   )
 
