@@ -114,6 +114,16 @@ if(CLANG_BUILT_STANDALONE)
   option(LLVM_ENABLE_LIBXML2 "Use libxml2 if available." ON)
 
   include(AddLLVM)
+  if(CMAKE_CROSSCOMPILING)
+    set(LLVM_USE_HOST_TOOLS ON)
+    include(CrossCompile)
+    if (NOT NATIVE_LLVM_DIR)
+      message(FATAL_ERROR
+       "Crosscompiling standalone requires the variable NATIVE_LLVM_DIR
+       for building the native lldb-tblgen used during the build process.")
+    endif()
+    llvm_create_cross_target(Clang NATIVE "" Release -DLLVM_DIR=${NATIVE_LLVM_DIR})
+  endif()
   include(TableGen)
   include(HandleLLVMOptions)
   include(VersionFromVCS)
