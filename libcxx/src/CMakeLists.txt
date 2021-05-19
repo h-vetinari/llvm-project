@@ -236,6 +236,23 @@ if (LIBCXX_ENABLE_SHARED)
       "-Wl,-force_symbols_weak_list,${CMAKE_CURRENT_SOURCE_DIR}/../lib/weak.exp")
 
     target_link_libraries(cxx_shared PRIVATE $<TARGET_NAME_IF_EXISTS:cxxabi-reexports>)
+    function(reexport_symbols file)
+      target_link_libraries(cxx_shared PRIVATE "-Wl,-reexported_symbols_list,${file}")
+    endfunction()
+
+    if (LIBCXXABI_ENABLE_NEW_DELETE_DEFINITIONS)
+      reexport_symbols("${CMAKE_CURRENT_SOURCE_DIR}/../../libcxxabi/lib/new-delete.exp")
+    endif()
+
+    if (LIBCXX_ENABLE_EXCEPTIONS)
+      reexport_symbols("${CMAKE_CURRENT_SOURCE_DIR}/../../libcxxabi/lib/exceptions.exp")
+
+      if ("${CMAKE_OSX_ARCHITECTURES}" MATCHES "^(armv6|armv7|armv7s)$")
+        reexport_symbols("${CMAKE_CURRENT_SOURCE_DIR}/../../libcxxabi/lib/personality-sjlj.exp")
+      else()
+        reexport_symbols("${CMAKE_CURRENT_SOURCE_DIR}/../../libcxxabi/lib/personality-v0.exp")
+      endif()
+    endif()
   endif()
 
   # Generate a linker script in place of a libc++.so symlink.
