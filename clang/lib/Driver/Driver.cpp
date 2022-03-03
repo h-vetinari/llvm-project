@@ -147,6 +147,9 @@ Driver::Driver(StringRef ClangExecutable, StringRef TargetTriple,
   if (!this->VFS)
     this->VFS = llvm::vfs::getRealFileSystem();
 
+  // Remove trailing null bytes from the sysroot that come from conda's relocation
+  SysRoot = std::string(SysRoot.c_str());
+
   Name = std::string(llvm::sys::path::filename(ClangExecutable));
   Dir = std::string(llvm::sys::path::parent_path(ClangExecutable));
   InstalledDir = Dir; // Provide a sensible default installed dir.
