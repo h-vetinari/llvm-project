@@ -9,10 +9,7 @@
 # TODO: This should probably not be a option going forward but we
 # we should commit to a way to do it. But due to getting this out
 # in LLVM 15.x we opted for a option.
-set(LIBCLANG_SOVERSION_ARG)
-if(NOT CLANG_FORCE_MATCHING_LIBCLANG_SOVERSION)
-  set(LIBCLANG_SOVERSION_ARG SOVERSION 13)
-endif()
+set(LIBCLANG_SOVERSION 13)
 
 # TODO: harmonize usage of LIBCLANG_SOVERSION / LIBCLANG_LIBARY_VERSION
 #       below; this was added under time-pressure to avoid reverting the
@@ -211,10 +208,17 @@ if(ENABLE_SHARED)
     # Ensure that libclang.so gets rebuilt when the linker script changes.
     set_property(SOURCE ARCMigrate.cpp APPEND PROPERTY
                  OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/libclang.map)
+  endif()
 
+  if(WIN32)
+    # point libclang.lib to libclang-<SO-version>.dll
+    set_target_properties(libclang PROPERTIES RUNTIME_OUTPUT_NAME "libclang-${LIBCLANG_SOVERSION}")
+  else()
+    # on unix, set soversion directly (also need to set version
+    # to avoid libclang.so.LLVM_VERSION_MAJOR being generated)
     set_target_properties(libclang PROPERTIES
-                          VERSION ${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}.${LLVM_VERSION_PATCH}${LLVM_VERSION_SUFFIX}
-                          ${LIBCLANG_SOVERSION_ARG})
+                          VERSION ${LIBCLANG_SOVERSION}
+                          SOVERSION ${LIBCLANG_SOVERSION})
   endif()
 endif()
 
