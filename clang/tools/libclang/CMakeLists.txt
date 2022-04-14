@@ -197,7 +197,13 @@ if(ENABLE_SHARED)
     # Ensure that libclang.so gets rebuilt when the linker script changes.
     set_property(SOURCE ARCMigrate.cpp APPEND PROPERTY
                  OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/libclang.map)
+  endif()
 
+  if(WIN32)
+    # point libclang.lib to libclang-<SO-version>.dll
+    set_target_properties(libclang PROPERTIES RUNTIME_OUTPUT_NAME "libclang-${LIBCLANG_SOVERSION}")
+  else()
+    # on unix, set so-version directly
     set_target_properties(libclang PROPERTIES
                           VERSION ${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}.${LLVM_VERSION_PATCH}${LLVM_VERSION_SUFFIX}
                           SOVERSION ${LIBCLANG_SOVERSION})
