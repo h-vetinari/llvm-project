@@ -13,10 +13,11 @@ function(install_symlink name target outdir)
 
   message(STATUS "Creating ${name}")
 
+  if(NOT CMAKE_HOST_WIN32)
   execute_process(
     COMMAND "${CMAKE_COMMAND}" -E create_symlink "${target}" "${name}"
     WORKING_DIRECTORY "${outdir}" ERROR_VARIABLE has_err)
-  if(CMAKE_HOST_WIN32 AND has_err)
+  else()
     execute_process(
       COMMAND "${CMAKE_COMMAND}" -E copy "${target}" "${name}"
       WORKING_DIRECTORY "${outdir}")
