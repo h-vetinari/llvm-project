@@ -276,19 +276,31 @@ SetThreadPriorityResult llvm::set_thread_priority(ThreadPriority Priority) {
   // minutes to complete. Examples include downloading a document or importing
   // data. This class offers a balance between responsiveness, performance, and
   // energy efficiency.
-  const auto qosClass = [&]() {
-    switch (Priority) {
-    case ThreadPriority::Background:
-      return QOS_CLASS_BACKGROUND;
-    case ThreadPriority::Low:
-      return QOS_CLASS_UTILITY;
-    case ThreadPriority::Default:
-      return QOS_CLASS_DEFAULT;
-    }
-  }();
-  return !pthread_set_qos_class_self_np(qosClass, 0)
+#if __has_builtin(__builtin_available)
+  if (__builtin_available(macos 10.10, *)) {
+    const auto qosClass = [&]() {
+      switch (Priority) {
+      case ThreadPriority::Background:
+        return QOS_CLASS_BACKGROUND;
+      case ThreadPriority::Low:
+        return QOS_CLASS_UTILITY;
+      case ThreadPriority::Default:
+        return QOS_CLASS_DEFAULT;
+      }
+    }();
+    return !pthread_set_qos_class_self_np(qosClass, 0)
+               ? SetThreadPriorityResult::SUCCESS
+               : SetThreadPriorityResult::FAILURE;
+  } else {
+#endif
+    return !setpriority(PRIO_DARWIN_THREAD, 0,
+                      Priority != ThreadPriority::Default ? PRIO_DARWIN_BG
+                                                             : 0)
              ? SetThreadPriorityResult::SUCCESS
              : SetThreadPriorityResult::FAILURE;
+#if __has_builtin(__builtin_available)
+  }
+#endif
 #endif
   return SetThreadPriorityResult::FAILURE;
 }
