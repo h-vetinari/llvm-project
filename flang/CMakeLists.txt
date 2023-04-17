@@ -47,9 +47,22 @@ endif()
 include(GNUInstallDirs)
 
 # MSVC + clang-cl build requires clang_rt.builtin.${target} library
-if (MSVC AND CMAKE_CXX_COMPILER_ID MATCHES Clang)
-  include(HandleCompilerRT)
-  find_compiler_rt_library(builtins CLANG_RT_BUILTINS_LIBRARY)
+if (MSVC OR APPLE)
+  if (MSVC)
+    cmake_path(SET CLANG_RT_BUILTINS_LIBRARY
+               NORMALIZE
+               "$ENV{LIBRARY_LIB}/clang/$ENV{PKG_VERSION}/lib/windows/clang_rt.builtins-x86_64.lib")
+  else()
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+      cmake_path(SET CLANG_RT_BUILTINS_LIBRARY
+                 NORMALIZE
+                 "$ENV{PREFIX}/lib/clang/$ENV{PKG_VERSION}/lib/libclang_rt.builtins_arm64_osx.a")
+    else()
+      cmake_path(SET CLANG_RT_BUILTINS_LIBRARY
+                 NORMALIZE
+                 "$ENV{PREFIX}/lib/clang/$ENV{PKG_VERSION}/lib/libclang_rt.builtins_x86_64_osx.a")
+    endif()
+  endif()
   get_filename_component(LIBDIR "${CLANG_RT_BUILTINS_LIBRARY}" DIRECTORY)
   if (IS_DIRECTORY "${LIBDIR}")
     link_libraries(${CLANG_RT_BUILTINS_LIBRARY})
