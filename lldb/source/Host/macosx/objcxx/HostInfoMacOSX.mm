@@ -61,6 +61,10 @@
 #define CPU_TYPE_ARM64_32 (CPU_TYPE_ARM | CPU_ARCH_ABI64_32)
 #endif
 
+#ifndef CPU_SUBTYPE_ARM64E
+#define CPU_SUBTYPE_ARM64E ((cpu_subtype_t)2)
+#endif
+
 #include <TargetConditionals.h> // for TARGET_OS_TV, TARGET_OS_WATCH
 
 using namespace lldb_private;
