@@ -22,11 +22,11 @@
 #include "llvm/ADT/StringRef.h"
 
 namespace clang {
-  class Token;
-  class IdentifierInfo;
-  class MacroDefinition;
-  class MacroDirective;
-  class MacroArgs;
+class Token;
+class IdentifierInfo;
+class MacroDefinition;
+class MacroDirective;
+class MacroArgs;
 
 /// This interface provides a way to observe the actions of the
 /// preprocessor as it does its thing.
@@ -36,9 +36,7 @@ class PPCallbacks {
 public:
   virtual ~PPCallbacks();
 
-  enum FileChangeReason {
-    EnterFile, ExitFile, SystemHeaderPragma, RenameFile
-  };
+  enum FileChangeReason { EnterFile, ExitFile, SystemHeaderPragma, RenameFile };
 
   /// Callback invoked whenever a source file is entered or exited.
   ///
@@ -47,8 +45,7 @@ public:
   /// the file before the new one entered for \p Reason EnterFile.
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                            SrcMgr::CharacteristicKind FileType,
-                           FileID PrevFID = FileID()) {
-  }
+                           FileID PrevFID = FileID()) {}
 
   enum class LexedFileChangeReason { EnterFile, ExitFile };
 
@@ -82,6 +79,47 @@ public:
   virtual void FileSkipped(const FileEntryRef &SkippedFile,
                            const Token &FilenameTok,
                            SrcMgr::CharacteristicKind FileType) {}
+
+  /// Callback invoked whenever the preprocessor cannot find a file for an
+  /// embed directive.
+  ///
+  /// \param FileName The name of the file being included, as written in the
+  /// source code.
+  ///
+  /// \returns true to indicate that the preprocessor should skip this file
+  /// and not issue any diagnostic.
+  virtual bool EmbedFileNotFound(StringRef FileName) { return false; }
+
+  /// Callback invoked whenever an embed directive has been processed,
+  /// regardless of whether the embed will actually find a file.
+  ///
+  /// \param HashLoc The location of the '#' that starts the embed directive.
+  ///
+  /// \param FileName The name of the file being included, as written in the
+  /// source code.
+  ///
+  /// \param IsAngled Whether the file name was enclosed in angle brackets;
+  /// otherwise, it was enclosed in quotes.
+  ///
+  /// \param FilenameRange The character range of the quotes or angle brackets
+  /// for the written file name.
+  ///
+  /// \param ParametersRange The character range of the embed parameters. An
+  /// empty range if there were no parameters.
+  ///
+  /// \param File The actual file that may be included by this embed directive.
+  ///
+  /// \param SearchPath Contains the search path which was used to find the file
+  /// in the file system. If the file was found via an absolute path,
+  /// SearchPath will be empty.
+  ///
+  /// \param RelativePath The path relative to SearchPath, at which the resource
+  /// file was found. This is equal to FileName.
+  virtual void EmbedDirective(SourceLocation HashLoc, StringRef FileName,
+                              bool IsAngled, CharSourceRange FilenameRange,
+                              CharSourceRange ParametersRange,
+                              OptionalFileEntryRef File, StringRef SearchPath,
+                              StringRef RelativePath) {}
 
   /// Callback invoked whenever the preprocessor cannot find a file for an
   /// inclusion directive.
@@ -151,7 +189,7 @@ public:
   /// \param ForPragma If entering from pragma directive.
   ///
   virtual void EnteredSubmodule(Module *M, SourceLocation ImportLoc,
-                                bool ForPragma) { }
+                                bool ForPragma) {}
 
   /// Callback invoked whenever a submodule was left.
   ///
@@ -162,7 +200,7 @@ public:
   /// \param ForPragma If entering from pragma directive.
   ///
   virtual void LeftSubmodule(Module *M, SourceLocation ImportLoc,
-                             bool ForPragma) { }
+                             bool ForPragma) {}
 
   /// Callback invoked whenever there was an explicit module-import
   /// syntax.
@@ -174,49 +212,40 @@ public:
   ///
   /// \param Imported The imported module; can be null if importing failed.
   ///
-  virtual void moduleImport(SourceLocation ImportLoc,
-                            ModuleIdPath Path,
-                            const Module *Imported) {
-  }
+  virtual void moduleImport(SourceLocation ImportLoc, ModuleIdPath Path,
+                            const Module *Imported) {}
 
   /// Callback invoked when the end of the main file is reached.
   ///
   /// No subsequent callbacks will be made.
-  virtual void EndOfMainFile() {
-  }
+  virtual void EndOfMainFile() {}
 
   /// Callback invoked when a \#ident or \#sccs directive is read.
   /// \param Loc The location of the directive.
   /// \param str The text of the directive.
   ///
-  virtual void Ident(SourceLocation Loc, StringRef str) {
-  }
+  virtual void Ident(SourceLocation Loc, StringRef str) {}
 
   /// Callback invoked when start reading any pragma directive.
   virtual void PragmaDirective(SourceLocation Loc,
-                               PragmaIntroducerKind Introducer) {
-  }
+                               PragmaIntroducerKind Introducer) {}
 
   /// Callback invoked when a \#pragma comment directive is read.
   virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
-                             StringRef Str) {
-  }
+                             StringRef Str) {}
 
   /// Callback invoked when a \#pragma mark comment is read.
-  virtual void PragmaMark(SourceLocation Loc, StringRef Trivia) {
-  }
+  virtual void PragmaMark(SourceLocation Loc, StringRef Trivia) {}
 
   /// Callback invoked when a \#pragma detect_mismatch directive is
   /// read.
   virtual void PragmaDetectMismatch(SourceLocation Loc, StringRef Name,
-                                    StringRef Value) {
-  }
+                                    StringRef Value) {}
 
   /// Callback invoked when a \#pragma clang __debug directive is read.
   /// \param Loc The location of the debug directive.
   /// \param DebugType The identifier following __debug.
-  virtual void PragmaDebug(SourceLocation Loc, StringRef DebugType) {
-  }
+  virtual void PragmaDebug(SourceLocation Loc, StringRef DebugType) {}
 
   /// Determines the kind of \#pragma invoking a call to PragmaMessage.
   enum PragmaMessageKind {
@@ -236,20 +265,15 @@ public:
   /// \param Kind The type of the message directive.
   /// \param Str The text of the message directive.
   virtual void PragmaMessage(SourceLocation Loc, StringRef Namespace,
-                             PragmaMessageKind Kind, StringRef Str) {
-  }
+                             PragmaMessageKind Kind, StringRef Str) {}
 
   /// Callback invoked when a \#pragma gcc diagnostic push directive
   /// is read.
-  virtual void PragmaDiagnosticPush(SourceLocation Loc,
-                                    StringRef Namespace) {
-  }
+  virtual void PragmaDiagnosticPush(SourceLocation Loc, StringRef Namespace) {}
 
   /// Callback invoked when a \#pragma gcc diagnostic pop directive
   /// is read.
-  virtual void PragmaDiagnosticPop(SourceLocation Loc,
-                                   StringRef Namespace) {
-  }
+  virtual void PragmaDiagnosticPop(SourceLocation Loc, StringRef Namespace) {}
 
   /// Callback invoked when a \#pragma gcc diagnostic directive is read.
   virtual void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
@@ -259,8 +283,7 @@ public:
   /// enabled with a pragma.
   virtual void PragmaOpenCLExtension(SourceLocation NameLoc,
                                      const IdentifierInfo *Name,
-                                     SourceLocation StateLoc, unsigned State) {
-  }
+                                     SourceLocation StateLoc, unsigned State) {}
 
   /// Callback invoked when a \#pragma warning directive is read.
   enum PragmaWarningSpecifier {
@@ -279,12 +302,10 @@ public:
                              ArrayRef<int> Ids) {}
 
   /// Callback invoked when a \#pragma warning(push) directive is read.
-  virtual void PragmaWarningPush(SourceLocation Loc, int Level) {
-  }
+  virtual void PragmaWarningPush(SourceLocation Loc, int Level) {}
 
   /// Callback invoked when a \#pragma warning(pop) directive is read.
-  virtual void PragmaWarningPop(SourceLocation Loc) {
-  }
+  virtual void PragmaWarningPop(SourceLocation Loc) {}
 
   /// Callback invoked when a \#pragma execution_character_set(push) directive
   /// is read.
@@ -310,8 +331,7 @@ public:
 
   /// Hook called whenever a macro definition is seen.
   virtual void MacroDefined(const Token &MacroNameTok,
-                            const MacroDirective *MD) {
-  }
+                            const MacroDirective *MD) {}
 
   /// Hook called whenever a macro \#undef is seen.
   /// \param MacroNameTok The active Token
@@ -321,20 +341,22 @@ public:
   /// MD is released immediately following this callback.
   virtual void MacroUndefined(const Token &MacroNameTok,
                               const MacroDefinition &MD,
-                              const MacroDirective *Undef) {
-  }
+                              const MacroDirective *Undef) {}
 
   /// Hook called whenever the 'defined' operator is seen.
   /// \param MD The MacroDirective if the name was a macro, null otherwise.
   virtual void Defined(const Token &MacroNameTok, const MacroDefinition &MD,
-                       SourceRange Range) {
-  }
+                       SourceRange Range) {}
+
+  /// Hook called when a '__has_embed' directive is read.
+  virtual void HasEmbed(SourceLocation Loc, StringRef FileName, bool IsAngled,
+                        OptionalFileEntryRef File) {}
 
   /// Hook called when a '__has_include' or '__has_include_next' directive is
   /// read.
   virtual void HasInclude(SourceLocation Loc, StringRef FileName, bool IsAngled,
                           OptionalFileEntryRef File,
-                          SrcMgr::CharacteristicKind FileType);
+                          SrcMgr::CharacteristicKind FileType) {}
 
   /// Hook called when a source range is skipped.
   /// \param Range The SourceRange that was skipped. The range begins at the
@@ -342,12 +364,9 @@ public:
   /// \param EndifLoc The end location of the 'endif' token, which may precede
   /// the range skipped by the directive (e.g excluding comments after an
   /// 'endif').
-  virtual void SourceRangeSkipped(SourceRange Range, SourceLocation EndifLoc) {
-  }
+  virtual void SourceRangeSkipped(SourceRange Range, SourceLocation EndifLoc) {}
 
-  enum ConditionValueKind {
-    CVK_NotEvaluated, CVK_False, CVK_True
-  };
+  enum ConditionValueKind { CVK_NotEvaluated, CVK_False, CVK_True };
 
   /// Hook called whenever an \#if is seen.
   /// \param Loc the source location of the directive.
@@ -356,8 +375,7 @@ public:
   ///
   // FIXME: better to pass in a list (or tree!) of Tokens.
   virtual void If(SourceLocation Loc, SourceRange ConditionRange,
-                  ConditionValueKind ConditionValue) {
-  }
+                  ConditionValueKind ConditionValue) {}
 
   /// Hook called whenever an \#elif is seen.
   /// \param Loc the source location of the directive.
@@ -366,68 +384,59 @@ public:
   /// \param IfLoc the source location of the \#if/\#ifdef/\#ifndef directive.
   // FIXME: better to pass in a list (or tree!) of Tokens.
   virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
-                    ConditionValueKind ConditionValue, SourceLocation IfLoc) {
-  }
+                    ConditionValueKind ConditionValue, SourceLocation IfLoc) {}
 
   /// Hook called whenever an \#ifdef is seen.
   /// \param Loc the source location of the directive.
   /// \param MacroNameTok Information on the token being tested.
   /// \param MD The MacroDefinition if the name was a macro, null otherwise.
   virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
-                     const MacroDefinition &MD) {
-  }
+                     const MacroDefinition &MD) {}
 
   /// Hook called whenever an \#elifdef branch is taken.
   /// \param Loc the source location of the directive.
   /// \param MacroNameTok Information on the token being tested.
   /// \param MD The MacroDefinition if the name was a macro, null otherwise.
   virtual void Elifdef(SourceLocation Loc, const Token &MacroNameTok,
-                       const MacroDefinition &MD) {
-  }
+                       const MacroDefinition &MD) {}
   /// Hook called whenever an \#elifdef is skipped.
   /// \param Loc the source location of the directive.
   /// \param ConditionRange The SourceRange of the expression being tested.
   /// \param IfLoc the source location of the \#if/\#ifdef/\#ifndef directive.
   // FIXME: better to pass in a list (or tree!) of Tokens.
   virtual void Elifdef(SourceLocation Loc, SourceRange ConditionRange,
-                       SourceLocation IfLoc) {
-  }
+                       SourceLocation IfLoc) {}
 
   /// Hook called whenever an \#ifndef is seen.
   /// \param Loc the source location of the directive.
   /// \param MacroNameTok Information on the token being tested.
   /// \param MD The MacroDefiniton if the name was a macro, null otherwise.
   virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
-                      const MacroDefinition &MD) {
-  }
+                      const MacroDefinition &MD) {}
 
   /// Hook called whenever an \#elifndef branch is taken.
   /// \param Loc the source location of the directive.
   /// \param MacroNameTok Information on the token being tested.
   /// \param MD The MacroDefinition if the name was a macro, null otherwise.
   virtual void Elifndef(SourceLocation Loc, const Token &MacroNameTok,
-                        const MacroDefinition &MD) {
-  }
+                        const MacroDefinition &MD) {}
   /// Hook called whenever an \#elifndef is skipped.
   /// \param Loc the source location of the directive.
   /// \param ConditionRange The SourceRange of the expression being tested.
   /// \param IfLoc the source location of the \#if/\#ifdef/\#ifndef directive.
   // FIXME: better to pass in a list (or tree!) of Tokens.
   virtual void Elifndef(SourceLocation Loc, SourceRange ConditionRange,
-                        SourceLocation IfLoc) {
-  }
+                        SourceLocation IfLoc) {}
 
   /// Hook called whenever an \#else is seen.
   /// \param Loc the source location of the directive.
   /// \param IfLoc the source location of the \#if/\#ifdef/\#ifndef directive.
-  virtual void Else(SourceLocation Loc, SourceLocation IfLoc) {
-  }
+  virtual void Else(SourceLocation Loc, SourceLocation IfLoc) {}
 
   /// Hook called whenever an \#endif is seen.
   /// \param Loc the source location of the directive.
   /// \param IfLoc the source location of the \#if/\#ifdef/\#ifndef directive.
-  virtual void Endif(SourceLocation Loc, SourceLocation IfLoc) {
-  }
+  virtual void Endif(SourceLocation Loc, SourceLocation IfLoc) {}
 };
 
 /// Simple wrapper class for chaining callbacks.
@@ -437,7 +446,7 @@ class PPChainedCallbacks : public PPCallbacks {
 public:
   PPChainedCallbacks(std::unique_ptr<PPCallbacks> _First,
                      std::unique_ptr<PPCallbacks> _Second)
-    : First(std::move(_First)), Second(std::move(_Second)) {}
+      : First(std::move(_First)), Second(std::move(_Second)) {}
 
   ~PPChainedCallbacks() override;
 
@@ -459,6 +468,25 @@ public:
                    SrcMgr::CharacteristicKind FileType) override {
     First->FileSkipped(SkippedFile, FilenameTok, FileType);
     Second->FileSkipped(SkippedFile, FilenameTok, FileType);
+  }
+
+  bool EmbedFileNotFound(StringRef FileName) override {
+    bool Skip = First->FileNotFound(FileName);
+    // Make sure to invoke the second callback, no matter if the first already
+    // returned true to skip the file.
+    Skip |= Second->FileNotFound(FileName);
+    return Skip;
+  }
+
+  void EmbedDirective(SourceLocation HashLoc, StringRef FileName, bool IsAngled,
+                      CharSourceRange FilenameRange,
+                      CharSourceRange ParametersRange,
+                      OptionalFileEntryRef File, StringRef SearchPath,
+                      StringRef RelativePath) override {
+    First->EmbedDirective(HashLoc, FileName, IsAngled, FilenameRange,
+                          ParametersRange, File, SearchPath, RelativePath);
+    Second->EmbedDirective(HashLoc, FileName, IsAngled, FilenameRange,
+                           ParametersRange, File, SearchPath, RelativePath);
   }
 
   bool FileNotFound(StringRef FileName) override {
@@ -561,9 +589,18 @@ public:
     Second->PragmaDiagnostic(Loc, Namespace, mapping, Str);
   }
 
+  void HasEmbed(SourceLocation Loc, StringRef FileName, bool IsAngled,
+                OptionalFileEntryRef File) override {
+    First->HasEmbed(Loc, FileName, IsAngled, File);
+    Second->HasEmbed(Loc, FileName, IsAngled, File);
+  }
+
   void HasInclude(SourceLocation Loc, StringRef FileName, bool IsAngled,
                   OptionalFileEntryRef File,
-                  SrcMgr::CharacteristicKind FileType) override;
+                  SrcMgr::CharacteristicKind FileType) override {
+    First->HasInclude(Loc, FileName, IsAngled, File, FileType);
+    Second->HasInclude(Loc, FileName, IsAngled, File, FileType);
+  }
 
   void PragmaOpenCLExtension(SourceLocation NameLoc, const IdentifierInfo *Name,
                              SourceLocation StateLoc, unsigned State) override {
@@ -619,8 +656,7 @@ public:
     Second->MacroDefined(MacroNameTok, MD);
   }
 
-  void MacroUndefined(const Token &MacroNameTok,
-                      const MacroDefinition &MD,
+  void MacroUndefined(const Token &MacroNameTok, const MacroDefinition &MD,
                       const MacroDirective *Undef) override {
     First->MacroUndefined(MacroNameTok, MD, Undef);
     Second->MacroUndefined(MacroNameTok, MD, Undef);
@@ -686,7 +722,7 @@ public:
   }
   /// Hook called whenever an \#elifndef is skipped.
   void Elifndef(SourceLocation Loc, SourceRange ConditionRange,
-               SourceLocation IfLoc) override {
+                SourceLocation IfLoc) override {
     First->Elifndef(Loc, ConditionRange, IfLoc);
     Second->Elifndef(Loc, ConditionRange, IfLoc);
   }
@@ -704,6 +740,6 @@ public:
   }
 };
 
-}  // end namespace clang
+} // end namespace clang
 
 #endif

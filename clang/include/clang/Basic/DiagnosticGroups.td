@@ -708,12 +708,19 @@ def ReservedIdAsMacro : DiagGroup<"reserved-macro-identifier">;
 def ReservedIdAsMacroAlias : DiagGroup<"reserved-id-macro", [ReservedIdAsMacro]>;
 def RestrictExpansionMacro : DiagGroup<"restrict-expansion">;
 def FinalMacro : DiagGroup<"final-macro">;
+// Warnings about unknown preprocessor parameters (e.g. `#embed` and extensions)
+def UnsupportedDirective : DiagGroup<"unsupported-directive">;
+def UnknownDirectiveParameters : DiagGroup<"unknown-directive-parameters">;
+def IgnoredDirectiveParameters : DiagGroup<"ignored-directive-parameters">;
+def DirectiveParameters : DiagGroup<"directive-parameters",
+    [UnknownDirectiveParameters, IgnoredDirectiveParameters]>;
 
 // Just silence warnings about -Wstrict-aliasing for now.
 def : DiagGroup<"strict-aliasing=0">;
 def : DiagGroup<"strict-aliasing=1">;
 def : DiagGroup<"strict-aliasing=2">;
 def : DiagGroup<"strict-aliasing">;
+
 
 // Just silence warnings about -Wstrict-overflow for now.
 def : DiagGroup<"strict-overflow=0">;

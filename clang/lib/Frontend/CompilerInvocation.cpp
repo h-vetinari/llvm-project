@@ -2861,6 +2861,7 @@ static bool ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.Plugins = Args.getAllArgValues(OPT_load);
   Opts.ASTDumpDecls = Args.hasArg(OPT_ast_dump, OPT_ast_dump_EQ);
   Opts.ASTDumpAll = Args.hasArg(OPT_ast_dump_all, OPT_ast_dump_all_EQ);
+
   // Only the -fmodule-file=<file> form.
   for (const auto *A : Args.filtered(OPT_fmodule_file)) {
     StringRef Val = A->getValue();
@@ -4276,6 +4277,7 @@ static void GeneratePreprocessorArgs(const PreprocessorOptions &Opts,
       continue;
 
     GenerateArg(Consumer, M.second ? OPT_U : OPT_D, M.first);
+
   }
 
   for (const auto &I : Opts.Includes) {
@@ -4301,6 +4303,12 @@ static void GeneratePreprocessorArgs(const PreprocessorOptions &Opts,
 
   if (Opts.SourceDateEpoch)
     GenerateArg(Consumer, OPT_source_date_epoch, Twine(*Opts.SourceDateEpoch));
+
+  for (const auto &EmbedEntry : Opts.EmbedEntries)
+    GenerateArg(Consumer, OPT_embed_dir, EmbedEntry);
+
+  if (Opts.NoBuiltinPPEmbed)
+    GenerateArg(Consumer, OPT_fno_builtin_, "pp_embed");
 
   // Don't handle LexEditorPlaceholders. It is implied by the action that is
   // generated elsewhere.
@@ -4391,6 +4399,19 @@ static bool ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
           << Epoch << MaxTimestamp;
     } else {
       Opts.SourceDateEpoch = V;
+    }
+  }
+
+  for (const auto *A : Args.filtered(OPT_embed_dir, OPT_embed_dir_EQ)) {
+    StringRef Val = A->getValue();
+    Opts.EmbedEntries.push_back(std::string(Val));
+  }
+
+  // Can disable the internal embed builtin / token
+  for (const auto *A : Args.filtered(OPT_fno_builtin, OPT_fno_builtin_)) {
+    StringRef Val = A->getValue();
+    if (Val == "pp_embed") {
+      Opts.NoBuiltinPPEmbed = true;
     }
   }
 

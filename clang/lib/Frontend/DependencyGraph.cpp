@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/Utils.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/SetVector.h"
@@ -26,6 +26,14 @@ namespace DOT = llvm::DOT;
 
 namespace {
 class DependencyGraphCallback : public PPCallbacks {
+public:
+  enum DirectiveBehavior {
+    Normal = 0,
+    IgnoreEmbed = 0b01,
+    IgnoreInclude = 0b10,
+  };
+
+private:
   const Preprocessor *PP;
   std::string OutputFile;
   std::string SysRoot;
@@ -34,16 +42,17 @@ class DependencyGraphCallback : public PPCallbacks {
       llvm::DenseMap<FileEntryRef, SmallVector<FileEntryRef, 2>>;
 
   DependencyMap Dependencies;
+  DirectiveBehavior Behavior;
 
 private:
-  raw_ostream &writeNodeReference(raw_ostream &OS,
-                                  const FileEntry *Node);
+  raw_ostream &writeNodeReference(raw_ostream &OS, const FileEntry *Node);
   void OutputGraphFile();
 
 public:
   DependencyGraphCallback(const Preprocessor *_PP, StringRef OutputFile,
-                          StringRef SysRoot)
-    : PP(_PP), OutputFile(OutputFile.str()), SysRoot(SysRoot.str()) { }
+                          StringRef SysRoot,
+                          DirectiveBehavior Action = IgnoreEmbed)
+      : PP(_PP), OutputFile(OutputFile.str()), SysRoot(SysRoot.str()) {}
 
   void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
                           StringRef FileName, bool IsAngled,
@@ -52,17 +61,20 @@ public:
                           StringRef RelativePath, const Module *Imported,
                           SrcMgr::CharacteristicKind FileType) override;
 
-  void EndOfMainFile() override {
-    OutputGraphFile();
-  }
+  void EmbedDirective(SourceLocation HashLoc, StringRef FileName, bool IsAngled,
+                      CharSourceRange FilenameRange,
+                      CharSourceRange ParametersRange,
+                      OptionalFileEntryRef File, StringRef SearchPath,
+                      StringRef RelativePath) override;
 
+  void EndOfMainFile() override { OutputGraphFile(); }
 };
-}
+} // namespace
 
 void clang::AttachDependencyGraphGen(Preprocessor &PP, StringRef OutputFile,
                                      StringRef SysRoot) {
-  PP.addPPCallbacks(std::make_unique<DependencyGraphCallback>(&PP, OutputFile,
-                                                               SysRoot));
+  PP.addPPCallbacks(
+      std::make_unique<DependencyGraphCallback>(&PP, OutputFile, SysRoot));
 }
 
 void DependencyGraphCallback::InclusionDirective(
@@ -70,6 +82,31 @@ void DependencyGraphCallback::InclusionDirective(
     bool IsAngled, CharSourceRange FilenameRange, OptionalFileEntryRef File,
     StringRef SearchPath, StringRef RelativePath, const Module *Imported,
     SrcMgr::CharacteristicKind FileType) {
+  if ((Behavior & IgnoreInclude) == IgnoreInclude) {
+    return;
+  }
+  if (!File)
+    return;
+
+  SourceManager &SM = PP->getSourceManager();
+  OptionalFileEntryRef FromFile =
+      SM.getFileEntryRefForID(SM.getFileID(SM.getExpansionLoc(HashLoc)));
+  if (!FromFile)
+    return;
+
+  Dependencies[*FromFile].push_back(*File);
+
+  AllFiles.insert(*File);
+  AllFiles.insert(*FromFile);
+}
+
+void DependencyGraphCallback::EmbedDirective(
+    SourceLocation HashLoc, StringRef FileName, bool IsAngled,
+    CharSourceRange FilenameRange, CharSourceRange ParametersRange,
+    OptionalFileEntryRef File, StringRef SearchPath, StringRef RelativePath) {
+  if ((Behavior & IgnoreEmbed) == IgnoreEmbed) {
+    return;
+  }
   if (!File)
     return;
 
@@ -96,8 +133,8 @@ void DependencyGraphCallback::OutputGraphFile() {
   std::error_code EC;
   llvm::raw_fd_ostream OS(OutputFile, EC, llvm::sys::fs::OF_TextWithCRLF);
   if (EC) {
-    PP->getDiagnostics().Report(diag::err_fe_error_opening) << OutputFile
-                                                            << EC.message();
+    PP->getDiagnostics().Report(diag::err_fe_error_opening)
+        << OutputFile << EC.message();
     return;
   }
 
@@ -118,7 +155,7 @@ void DependencyGraphCallback::OutputGraphFile() {
 
   // Write the edges
   for (DependencyMap::iterator F = Dependencies.begin(),
-                            FEnd = Dependencies.end();
+                               FEnd = Dependencies.end();
        F != FEnd; ++F) {
     for (unsigned I = 0, N = F->second.size(); I != N; ++I) {
       OS.indent(2);
@@ -130,4 +167,3 @@ void DependencyGraphCallback::OutputGraphFile() {
   }
   OS << "}\n";
 }
-
