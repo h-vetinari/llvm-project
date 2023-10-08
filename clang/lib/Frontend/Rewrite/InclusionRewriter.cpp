@@ -463,11 +463,11 @@ void InclusionRewriter::Process(FileID FileId,
               // Add line marker to indicate we're returning from an included
               // file.
               LineInfoExtra = " 2";
-            }
-            // fix up lineinfo (since commented out directive changed line
-            // numbers) for inclusions that were skipped due to header guards
-            WriteLineInfo(FileName, Line, FileType, LineInfoExtra);
-            break;
+          }
+          // fix up lineinfo (since commented out directive changed line
+          // numbers) for inclusions that were skipped due to header guards
+          WriteLineInfo(FileName, Line, FileType, LineInfoExtra);
+          break;
           }
           case tok::pp_pragma: {
             StringRef Identifier = NextIdentifierName(RawLex, RawToken);
@@ -475,7 +475,7 @@ void InclusionRewriter::Process(FileID FileId,
               if (NextIdentifierName(RawLex, RawToken) == "system_header") {
                 // keep the directive in, commented out
                 CommentOutDirective(RawLex, HashToken, FromFile, LocalEOL,
-                  NextToWrite, Line);
+                                    NextToWrite, Line);
                 // update our own type
                 FileType = SM.getFileCharacteristic(RawToken.getLocation());
                 WriteLineInfo(FileName, Line, FileType);
@@ -483,7 +483,7 @@ void InclusionRewriter::Process(FileID FileId,
             } else if (Identifier == "once") {
               // keep the directive in, commented out
               CommentOutDirective(RawLex, HashToken, FromFile, LocalEOL,
-                NextToWrite, Line);
+                                  NextToWrite, Line);
               WriteLineInfo(FileName, Line, FileType);
             }
             break;
@@ -535,7 +535,7 @@ void InclusionRewriter::Process(FileID FileId,
             OutputContentUpTo(FromFile, NextToWrite,
                               SM.getFileOffset(RawToken.getLocation()) +
                                   RawToken.getLength(),
-                              LocalEOL, Line, /*EnsureNewline=*/ true);
+                              LocalEOL, Line, /*EnsureNewline=*/true);
             WriteLineInfo(FileName, Line, FileType);
             RawLex.SetKeepWhitespaceMode(false);
             break;

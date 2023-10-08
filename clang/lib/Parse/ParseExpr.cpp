@@ -32,6 +32,7 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/TypoCorrection.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Base64.h"
 #include <optional>
 using namespace clang;
 
@@ -805,6 +806,7 @@ class CastExpressionIdValidator final : public CorrectionCandidateCallback {
 /// [MS]    '__builtin_FUNCSIG' '(' ')'
 /// [GNU]   '__builtin_LINE' '(' ')'
 /// [CLANG] '__builtin_COLUMN' '(' ')'
+/// [CLANG] '__builtin_pp_embed' '(' type-name ',' string-literal ',' string-literal ')'
 /// [GNU]   '__builtin_source_location' '(' ')'
 /// [GNU]   '__builtin_types_compatible_p' '(' type-name ',' type-name ')'
 /// [GNU]   '__null'
@@ -1057,9 +1059,9 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
                                isVectorLiteral, NotPrimaryExpression);
 
   case tok::identifier:
-  ParseIdentifier: {    // primary-expression: identifier
-                        // unqualified-id: identifier
-                        // constant: enumeration-constant
+  ParseIdentifier: { // primary-expression: identifier
+                     // unqualified-id: identifier
+                     // constant: enumeration-constant
     // Turn a potentially qualified name into a annot_typename or
     // annot_cxxscope if it would be valid.  This handles things like x::y, etc.
     if (getLangOpts().CPlusPlus) {
@@ -1345,6 +1347,7 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
   case tok::kw___builtin_FUNCSIG:
   case tok::kw___builtin_LINE:
   case tok::kw___builtin_source_location:
+  case tok::kw___builtin_pp_embed:
     if (NotPrimaryExpression)
       *NotPrimaryExpression = true;
     // This parses the complete suffix; we can return early.
@@ -2145,6 +2148,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       } else {
         Expr *Fn = LHS.get();
         SourceLocation RParLoc = Tok.getLocation();
+        Actions.ModifyCallExprArguments(Fn, Loc, ArgExprs, RParLoc);
         LHS = Actions.ActOnCallExpr(getCurScope(), Fn, Loc, ArgExprs, RParLoc,
                                     ExecConfig);
         if (LHS.isInvalid()) {
@@ -2575,6 +2579,7 @@ ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
 /// [MS]    '__builtin_FUNCSIG' '(' ')'
 /// [GNU]   '__builtin_LINE' '(' ')'
 /// [CLANG] '__builtin_COLUMN' '(' ')'
+/// [CLANG] '__builtin_pp_embed' '(' 'type-name ',' string-literal ',' string-literal ')'
 /// [GNU]   '__builtin_source_location' '(' ')'
 /// [OCL]   '__builtin_astype' '(' assignment-expression ',' type-name ')'
 ///
@@ -2839,6 +2844,96 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
       }
     }();
     Res = Actions.ActOnSourceLocExpr(Kind, StartLoc, ConsumeParen());
+    break;
+  }
+  case tok::kw___builtin_pp_embed: {
+    SourceRange DataTyExprSourceRange{};
+    TypeResult DataTyExpr(ParseTypeName(&DataTyExprSourceRange));
+
+    if (ExpectAndConsume(tok::comma)) {
+      SkipUntil(tok::r_paren, StopAtSemi);
+      Res = ExprError();
+    }
+
+    ExprResult FilenameArgExpr(ParseStringLiteralExpression());
+
+    if (ExpectAndConsume(tok::comma)) {
+      SkipUntil(tok::r_paren, StopAtSemi);
+      Res = ExprError();
+    }
+
+    ExprResult Base64ArgExpr(ParseStringLiteralExpression());
+
+    if (Tok.isNot(tok::r_paren)) {
+      Diag(Tok, diag::err_expected) << tok::r_paren;
+      Res = ExprError();
+    }
+
+    const ASTContext &Context = Actions.getASTContext();
+    QualType DataTy = Context.UnsignedCharTy;
+    size_t TargetWidth = Context.getTypeSize(DataTy);
+    if (DataTyExpr.isInvalid()) {
+      Res = ExprError();
+    } else {
+      DataTy = DataTyExpr.get().get().getCanonicalType();
+      TargetWidth = Context.getTypeSize(DataTy);
+      if (DataTy.getUnqualifiedType() != Context.UnsignedCharTy &&
+          DataTy.getUnqualifiedType() != Context.CharTy) {
+        // TODO: check if is exactly the same as unsigned char
+        Diag(DataTyExprSourceRange.getBegin(),
+             diag::err_builtin_pp_embed_invalid_argument)
+            << "only 'char' and 'unsigned char' are supported";
+        Res = ExprError();
+      }
+      if ((TargetWidth % CHAR_BIT) != 0) {
+        Diag(DataTyExprSourceRange.getBegin(),
+             diag::err_builtin_pp_embed_invalid_argument)
+            << "width of element type is not a multiple of host platform's "
+               "CHAR_BIT!";
+        Res = ExprError();
+      }
+    }
+
+    StringLiteral *FilenameLiteral = nullptr;
+    if (FilenameArgExpr.isInvalid()) {
+      Res = ExprError();
+    } else {
+      FilenameLiteral = FilenameArgExpr.getAs<StringLiteral>();
+    }
+
+    std::vector<char> BinaryData{};
+    if (Base64ArgExpr.isInvalid()) {
+      Res = ExprError();
+    } else {
+      StringLiteral *Base64Str = Base64ArgExpr.getAs<StringLiteral>();
+      StringRef Base64StrData = Base64Str->getBytes();
+      if (Base64Str->getKind() != StringLiteral::Ordinary) {
+        Diag(Base64Str->getExprLoc(), diag::err_expected_string_literal)
+            << 0
+            << "'__builtin_pp_embed' with valid base64 encoding that is an "
+               "ordinary \"...\" string";
+      }
+      const auto OnDecodeError = [&](const llvm::ErrorInfoBase &) {
+        Diag(Base64Str->getExprLoc(),
+             diag::err_builtin_pp_embed_invalid_argument)
+            << "expected a valid base64 encoded string";
+      };
+      llvm::Error Err = llvm::decodeBase64(Base64Str->getBytes(), BinaryData);
+      llvm::handleAllErrors(std::move(Err), OnDecodeError);
+      if (((BinaryData.size() * CHAR_BIT) % TargetWidth) != 0) {
+        Diag(DataTyExprSourceRange.getBegin(),
+             diag::err_builtin_pp_embed_invalid_argument)
+            << "size of data does not split evently into the number of bytes "
+               "requested";
+        Res = ExprError();
+      }
+    }
+
+    if (!Res.isInvalid()) {
+      Res = Actions.ActOnPPEmbedExpr(
+          StartLoc, Base64ArgExpr.get()->getExprLoc(), ConsumeParen(),
+          FilenameLiteral, DataTy, std::move(BinaryData));
+    }
     break;
   }
   }
