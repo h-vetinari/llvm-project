@@ -29,6 +29,7 @@
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/ModuleMap.h"
 #include "clang/Lex/PPCallbacks.h"
+#include "clang/Lex/PPEmbedParameters.h"
 #include "clang/Lex/Token.h"
 #include "clang/Lex/TokenLexer.h"
 #include "llvm/ADT/APSInt.h"
@@ -1163,6 +1164,9 @@ private:
 
   void updateOutOfDateIdentifier(IdentifierInfo &II) const;
 
+  /// Buffers for used #embed directives
+  std::vector<std::string> EmbedBuffers;
+
 public:
   Preprocessor(std::shared_ptr<PreprocessorOptions> PPOpts,
                DiagnosticsEngine &diags, const LangOptions &LangOpts,
@@ -1730,15 +1734,15 @@ public:
   bool LexHeaderName(Token &Result, bool AllowMacroExpansion = true);
 
   struct LexEmbedParametersResult {
-    bool Successful;
-    std::optional<size_t> MaybeLimitParam;
-    std::optional<size_t> MaybeOffsetParam;
-    std::optional<SmallVector<Token, 2>> MaybeIfEmptyParam;
-    std::optional<SmallVector<Token, 2>> MaybePrefixParam;
-    std::optional<SmallVector<Token, 2>> MaybeSuffixParam;
-    int UnrecognizedParams;
+    std::optional<PPEmbedParameterLimit> MaybeLimitParam;
+    std::optional<PPEmbedParameterOffset> MaybeOffsetParam;
+    std::optional<PPEmbedParameterIfEmpty> MaybeIfEmptyParam;
+    std::optional<PPEmbedParameterPrefix> MaybePrefixParam;
+    std::optional<PPEmbedParameterSuffix> MaybeSuffixParam;
     SourceLocation StartLoc;
     SourceLocation EndLoc;
+    int UnrecognizedParams;
+    bool Successful;
   };
 
   LexEmbedParametersResult LexEmbedParameters(Token &Current,
@@ -1807,7 +1811,7 @@ public:
   /// Parses a simple integer literal to get its numeric value.  Floating
   /// point literals and user defined literals are rejected.  Used primarily to
   /// handle pragmas that accept integer arguments.
-  bool parseSimpleIntegerLiteral(Token &Tok, uint64_t &Value);
+  bool parseSimpleIntegerLiteral(Token &Tok, uint64_t &Value, bool WithLex = true);
 
   /// Disables macro expansion everywhere except for preprocessor directives.
   void SetMacroExpansionOnlyInDirectives() {
@@ -2724,12 +2728,18 @@ private:
   // Binary data inclusion
   void HandleEmbedDirective(SourceLocation HashLoc, Token &Tok,
                             const FileEntry *LookupFromFile = nullptr);
-  void HandleEmbedDirectiveNaive(
-      SourceLocation FilenameTok, LexEmbedParametersResult &Params,
-      StringRef BinaryContents, const size_t TargetCharWidth);
-  void HandleEmbedDirectiveBuiltin(
-      SourceLocation FilenameTok, LexEmbedParametersResult &Params,
-      StringRef BinaryContents, const size_t TargetCharWidth);
+  void HandleEmbedDirectiveNaive(SourceLocation HashLoc,
+                                 SourceLocation FilenameTok,
+                                 LexEmbedParametersResult &Params,
+                                 StringRef BinaryContents,
+                                 const size_t TargetCharWidth);
+  void HandleEmbedDirectiveBuiltin(SourceLocation HashLoc,
+                                   const Token &FilenameTok,
+                                   StringRef ResolvedFilename,
+                                   StringRef SearchPath, StringRef RelativePath,
+                                   LexEmbedParametersResult &Params,
+                                   StringRef BinaryContents,
+                                   const size_t TargetCharWidth);
 
   // File inclusion.
   void HandleIncludeDirective(SourceLocation HashLoc, Token &Tok,
