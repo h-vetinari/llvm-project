@@ -1270,8 +1270,8 @@ static bool EvaluateHasIncludeCommon(Token &Tok, IdentifierInfo *II,
 int Preprocessor::EvaluateHasEmbed(Token &Tok, IdentifierInfo *II) {
   // pedwarn for not being on C23
   if (!LangOpts.C23 || !LangOpts.CPlusPlus26) {
-    auto EitherDiag = (LangOpts.CPlusPlus ? diag::warn_c23_pp_has_embed
-                                          : diag::warn_cxx26_pp_has_embed);
+    auto EitherDiag = (LangOpts.CPlusPlus ? diag::warn_cxx26_pp_has_embed
+                                          : diag::warn_c23_pp_has_embed);
     Diag(Tok, EitherDiag);
   }
 
@@ -1363,11 +1363,15 @@ int Preprocessor::EvaluateHasEmbed(Token &Tok, IdentifierInfo *II) {
     return VALUE__STDC_EMBED_NOT_FOUND__;
   }
   size_t FileSize = MaybeFileEntry->getSize();
-  if (FileSize == 0 ||
-      (Params.MaybeLimitParam ? *Params.MaybeLimitParam == 0 : false)) {
+  if (Params.MaybeLimitParam) {
+    if (FileSize > Params.MaybeLimitParam->Limit) {
+      FileSize = Params.MaybeLimitParam->Limit;
+    }
+  }
+  if (FileSize == 0) {
     return VALUE__STDC_EMBED_EMPTY__;
   }
-  if (Params.MaybeOffsetParam && *Params.MaybeOffsetParam >= FileSize) {
+  if (Params.MaybeOffsetParam && Params.MaybeOffsetParam->Offset >= FileSize) {
     return VALUE__STDC_EMBED_EMPTY__;
   }
   return VALUE__STDC_EMBED_FOUND__;
