@@ -394,8 +394,8 @@ bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
   return DiagnoseUnexpandedParameterPacks(Loc, UPPC, Unexpanded);
 }
 
-bool Sema::DiagnoseUnexpandedParameterPack(Expr *E,
-                                        UnexpandedParameterPackContext UPPC) {
+bool Sema::DiagnoseUnexpandedParameterPack(
+    Expr *E, UnexpandedParameterPackContext UPPC) {
   // C++0x [temp.variadic]p5:
   //   An appearance of a name of a parameter pack that is not expanded is
   //   ill-formed.

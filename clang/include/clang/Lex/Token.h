@@ -254,7 +254,7 @@ public:
     Flags &= ~Flag;
   }
 
-  /// Return the internal represtation of the flags.
+  /// Return the internal representation of the flags.
   ///
   /// This is only intended for low-level operations such as writing tokens to
   /// disk.

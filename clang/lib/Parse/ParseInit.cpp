@@ -538,9 +538,9 @@ ExprResult Parser::ParseBraceInitializer() {
 
   bool closed = !T.consumeClose();
 
-  if (InitExprsOk && closed)
-    return Actions.ActOnInitList(LBraceLoc, InitExprs,
-                                 T.getCloseLocation());
+  if (InitExprsOk && closed) {
+    return Actions.ActOnInitList(LBraceLoc, InitExprs, T.getCloseLocation());
+  }
 
   return ExprError(); // an error occurred.
 }
