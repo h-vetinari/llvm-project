@@ -2741,14 +2741,14 @@ private:
                             const FileEntry *LookupFromFile = nullptr);
   void HandleEmbedDirectiveNaive(SourceLocation HashLoc,
                                  SourceLocation FilenameTok,
-                                 LexEmbedParametersResult &Params,
+                                 const LexEmbedParametersResult &Params,
                                  StringRef BinaryContents,
                                  const size_t TargetCharWidth);
   void HandleEmbedDirectiveBuiltin(SourceLocation HashLoc,
                                    const Token &FilenameTok,
                                    StringRef ResolvedFilename,
                                    StringRef SearchPath, StringRef RelativePath,
-                                   LexEmbedParametersResult &Params,
+                                   const LexEmbedParametersResult &Params,
                                    StringRef BinaryContents,
                                    const size_t TargetCharWidth);
 

@@ -3826,11 +3826,59 @@ inline constexpr const char *IntegerLiterals[] = {
     "242", "243", "244", "245", "246", "247", "248", "249", "250", "251", "252",
     "253", "254", "255"};
 
-void Preprocessor::HandleEmbedDirectiveNaive(SourceLocation HashLoc,
-                                             SourceLocation FilenameLoc,
-                                             LexEmbedParametersResult &Params,
-                                             StringRef BinaryContents,
-                                             const size_t TargetCharWidth) {
+static size_t
+ComputeNaiveReserveSize(const Preprocessor::LexEmbedParametersResult &Params,
+                        StringRef TypeName, StringRef BinaryContents,
+                        SmallVectorImpl<char> &TokSpellingBuffer) {
+  size_t ReserveSize = 0;
+  if (BinaryContents.empty()) {
+    if (Params.MaybeIfEmptyParam) {
+      for (const auto &Tok : Params.MaybeIfEmptyParam->Tokens) {
+        const size_t TokLen = Tok.getLength();
+        if (TokLen > TokSpellingBuffer.size()) {
+          TokSpellingBuffer.resize(TokLen);
+        }
+        ReserveSize += TokLen;
+      }
+    }
+  } else {
+    if (Params.MaybePrefixParam) {
+      for (const auto &Tok : Params.MaybePrefixParam->Tokens) {
+        const size_t TokLen = Tok.getLength();
+        if (TokLen > TokSpellingBuffer.size()) {
+          TokSpellingBuffer.resize(TokLen);
+        }
+        ReserveSize += TokLen;
+      }
+    }
+    for (const auto &Byte : BinaryContents) {
+      ReserveSize += 3 + TypeName.size(); // ((type-name)
+      if (Byte > 99) {
+        ReserveSize += 3; // ###
+      } else if (Byte > 9) {
+        ReserveSize += 2; // ##
+      } else {
+        ReserveSize += 1; // #
+      }
+      ReserveSize += 2; // ),
+    }
+    if (Params.MaybePrefixParam) {
+      for (const auto &Tok : Params.MaybePrefixParam->Tokens) {
+        const size_t TokLen = Tok.getLength();
+        if (TokLen > TokSpellingBuffer.size()) {
+          TokSpellingBuffer.resize(TokLen);
+        }
+        ReserveSize += TokLen;
+      }
+    }
+  }
+  return ReserveSize;
+}
+
+void Preprocessor::HandleEmbedDirectiveNaive(
+    SourceLocation HashLoc, SourceLocation FilenameLoc,
+    const LexEmbedParametersResult &Params, StringRef BinaryContents,
+    const size_t TargetCharWidth) {
   // Load up a new embed buffer for this file and set of parameters in
   // particular.
   EmbedBuffers.push_back("");
@@ -3841,30 +3889,37 @@ void Preprocessor::HandleEmbedDirectiveNaive(SourceLocation HashLoc,
     return PrefixNumber.concat(">");
   }(EmbedBufferNumberVal);
   std::string &TargetEmbedBuffer = EmbedBuffers.back();
+  const size_t TotalSize = BinaryContents.size();
+  // In the future, this might change/improve.
+  const StringRef TypeName = "unsigned char";
 
-  // In the future, this might improve.
-  const StringRef SmallestType = "unsigned char";
+  SmallVector<char, 32> TokSpellingBuffer(32, 0);
+  const size_t ReserveSize = ComputeNaiveReserveSize(
+      Params, TypeName, BinaryContents, TokSpellingBuffer);
+  TargetEmbedBuffer.reserve(ReserveSize);
 
   // Generate the look-alike source file
   if (BinaryContents.empty()) {
     if (Params.MaybeIfEmptyParam) {
-      PPEmbedParameterIfEmpty &EmptyParam = *Params.MaybeIfEmptyParam;
+      const PPEmbedParameterIfEmpty &EmptyParam = *Params.MaybeIfEmptyParam;
       for (const auto &Tok : EmptyParam.Tokens) {
-        TargetEmbedBuffer.append(this->getSpelling(Tok));
+        StringRef Spelling = this->getSpelling(Tok, TokSpellingBuffer);
+        TargetEmbedBuffer.append(Spelling.data(), Spelling.size());
       }
     }
   } else {
     if (Params.MaybePrefixParam) {
-      PPEmbedParameterPrefix &PrefixParam = *Params.MaybePrefixParam;
+      const PPEmbedParameterPrefix &PrefixParam = *Params.MaybePrefixParam;
       for (const auto &Tok : PrefixParam.Tokens) {
-        TargetEmbedBuffer.append(this->getSpelling(Tok));
+        StringRef Spelling = this->getSpelling(Tok, TokSpellingBuffer);
+        TargetEmbedBuffer.append(Spelling.data(), Spelling.size());
       }
     }
     for (size_t I = 0; I < BinaryContents.size(); ++I) {
       unsigned char ByteValue = BinaryContents[I];
       StringRef ByteRepresentation = IntegerLiterals[ByteValue];
       TargetEmbedBuffer.append(2, '(');
-      TargetEmbedBuffer.append(SmallestType.data(), SmallestType.size());
+      TargetEmbedBuffer.append(TypeName.data(), TypeName.size());
       TargetEmbedBuffer.append(1, ')');
       TargetEmbedBuffer.append(ByteRepresentation.data(),
                                ByteRepresentation.size());
@@ -3875,9 +3930,10 @@ void Preprocessor::HandleEmbedDirectiveNaive(SourceLocation HashLoc,
       }
     }
     if (Params.MaybeSuffixParam) {
-      PPEmbedParameterSuffix &SuffixParam = *Params.MaybeSuffixParam;
+      const PPEmbedParameterSuffix &SuffixParam = *Params.MaybeSuffixParam;
       for (const auto &Tok : SuffixParam.Tokens) {
-        TargetEmbedBuffer.append(this->getSpelling(Tok));
+        StringRef Spelling = this->getSpelling(Tok, TokSpellingBuffer);
+        TargetEmbedBuffer.append(Spelling.data(), Spelling.size());
       }
     }
   }
@@ -3898,7 +3954,7 @@ void Preprocessor::HandleEmbedDirectiveNaive(SourceLocation HashLoc,
 static bool TokenListIsCharacterArray(Preprocessor &PP,
                                       const size_t TargetCharWidth,
                                       bool IsPrefix,
-                                      SmallVectorImpl<Token> &Tokens,
+                                      const SmallVectorImpl<Token> &Tokens,
                                       llvm::SmallVectorImpl<char> &Output) {
   const bool IsSuffix = !IsPrefix;
   size_t MaxValue =
@@ -4004,7 +4060,7 @@ static void TripleEncodeBase64(StringRef Bytes0, StringRef Bytes1,
 void Preprocessor::HandleEmbedDirectiveBuiltin(
     SourceLocation HashLoc, const Token &FilenameTok,
     StringRef ResolvedFilename, StringRef SearchPath, StringRef RelativePath,
-    LexEmbedParametersResult &Params, StringRef BinaryContents,
+    const LexEmbedParametersResult &Params, StringRef BinaryContents,
     const size_t TargetCharWidth) {
   // if it's empty, just process it like a normal expanded token stream
   if (BinaryContents.empty()) {
@@ -4017,7 +4073,7 @@ void Preprocessor::HandleEmbedDirectiveBuiltin(
   if (Params.MaybePrefixParam) {
     // If we ahve a prefix, validate that it's a good fit for direct data
     // embedded (and prepare to prepend it)
-    PPEmbedParameterPrefix &PrefixParam = *Params.MaybePrefixParam;
+    const PPEmbedParameterPrefix &PrefixParam = *Params.MaybePrefixParam;
     if (!TokenListIsCharacterArray(*this, TargetCharWidth, true,
                                    PrefixParam.Tokens, BinaryPrefix)) {
       HandleEmbedDirectiveNaive(HashLoc, FilenameTok.getLocation(), Params,
@@ -4028,7 +4084,7 @@ void Preprocessor::HandleEmbedDirectiveBuiltin(
   if (Params.MaybeSuffixParam) {
     // If we ahve a prefix, validate that it's a good fit for direct data
     // embedding (and prepare to append it)
-    PPEmbedParameterSuffix &SuffixParam = *Params.MaybeSuffixParam;
+    const PPEmbedParameterSuffix &SuffixParam = *Params.MaybeSuffixParam;
     if (!TokenListIsCharacterArray(*this, TargetCharWidth, false,
                                    SuffixParam.Tokens, BinarySuffix)) {
       HandleEmbedDirectiveNaive(HashLoc, FilenameTok.getLocation(), Params,
@@ -4047,9 +4103,25 @@ void Preprocessor::HandleEmbedDirectiveBuiltin(
     return PrefixNumber.concat(">");
   }(EmbedBufferNumberVal);
   std::string &TargetEmbedBuffer = EmbedBuffers.back();
+  StringRef TypeName = "unsigned char";
+  const size_t TotalSize =
+      BinaryPrefix.size() + BinaryContents.size() + BinarySuffix.size();
+  const size_t ReserveSize =        // add up for necessary size:
+      19                            // __builtin_pp_embed(
+      + TypeName.size()             // type-name
+      + 2                           // ,"
+      + ResolvedFilename.size()     // file-name
+      + 3                           // ","
+      + (((TotalSize + 2) / 3) * 4) // base64-string
+      + 2                           // ");
+      ;
+  // Reserve appropriate size
+  TargetEmbedBuffer.reserve(ReserveSize);
 
   // Generate the look-alike source file
-  TargetEmbedBuffer.append("__builtin_pp_embed(unsigned char,\"");
+  TargetEmbedBuffer.append("__builtin_pp_embed(");
+  TargetEmbedBuffer.append(TypeName.data(), TypeName.size());
+  TargetEmbedBuffer.append(",\"");
   TargetEmbedBuffer.append(ResolvedFilename.data(), ResolvedFilename.size());
   TargetEmbedBuffer.append("\",\"");
   // include the prefix(...) and suffix(...) binary data in the total contents
