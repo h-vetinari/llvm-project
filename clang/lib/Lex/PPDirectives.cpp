@@ -3915,7 +3915,7 @@ void Preprocessor::HandleEmbedDirectiveNaive(
         TargetEmbedBuffer.append(Spelling.data(), Spelling.size());
       }
     }
-    for (size_t I = 0; I < BinaryContents.size(); ++I) {
+    for (size_t I = 0; I < TotalSize; ++I) {
       unsigned char ByteValue = BinaryContents[I];
       StringRef ByteRepresentation = IntegerLiterals[ByteValue];
       TargetEmbedBuffer.append(2, '(');
@@ -3924,7 +3924,7 @@ void Preprocessor::HandleEmbedDirectiveNaive(
       TargetEmbedBuffer.append(ByteRepresentation.data(),
                                ByteRepresentation.size());
       TargetEmbedBuffer.append(1, ')');
-      bool AtEndOfContents = I == (BinaryContents.size() - 1);
+      bool AtEndOfContents = I == (TotalSize - 1);
       if (!AtEndOfContents) {
         TargetEmbedBuffer.append(1, ',');
       }

@@ -898,10 +898,6 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
       std::string Name = M->getFullModuleName();
       Callbacks->OS->write(Name.data(), Name.size());
       Callbacks->HandleNewlinesInToken(Name.data(), Name.size());
-    } else if (Tok.is(tok::comma)) {
-      // hard-wire comma writing to prevent #embed from spilling unread contents
-      // from fast token dumping or builtin speed writing
-      OS.write(',');
     } else if (Tok.isAnnotation()) {
       // Ignore annotation tokens created by pragmas - the pragmas themselves
       // will be reproduced in the preprocessed output.
