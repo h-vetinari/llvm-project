@@ -17796,12 +17796,13 @@ bool Sema::DiagnosePPEmbedExpr(Expr *&E, SourceLocation ContextLocation,
   }
 
   StringRef LocationName = GetLocationName(PPEmbedContext);
-  StringRef DiagnosticMessage = (SingleAllowed
-      ? "cannot use a preprocessor embed that expands to nothing or expands to "
-        "more than one item in "
-      : "cannot use a preprocessor embed in ");
+  StringRef DiagnosticMessage =
+      (SingleAllowed ? "cannot use a preprocessor embed that expands to "
+                       "nothing or expands to "
+                       "more than one item in "
+                     : "cannot use a preprocessor embed in ");
   Diag(ContextLocation, diag::err_builtin_pp_embed_invalid_location)
-          << DiagnosticMessage << 1 << LocationName;
+      << DiagnosticMessage << 1 << LocationName;
   return false;
 }
 

@@ -205,7 +205,8 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
     return Cl::CL_PRValue;
 
   case Expr::PPEmbedExprClass:
-    // Nominally, this just goes through as a PRValue until we actually expand it and check it.
+    // Nominally, this just goes through as a PRValue until we actually expand
+    // it and check it.
     return Cl::CL_PRValue;
 
   // Make HLSL this reference-like

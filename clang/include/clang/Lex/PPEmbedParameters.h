@@ -13,8 +13,8 @@
 #ifndef LLVM_CLANG_LEX_PPEMBEDPARAMETERS_H
 #define LLVM_CLANG_LEX_PPEMBEDPARAMETERS_H
 
-#include "clang/Lex/Token.h"
 #include "clang/Lex/PPDirectiveParameter.h"
+#include "clang/Lex/Token.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
@@ -25,7 +25,8 @@ class PPEmbedParameterOffset : public PPDirectiveParameter {
 public:
   size_t Offset;
 
-  PPEmbedParameterOffset(size_t Offset, SourceLocation Start, SourceLocation End)
+  PPEmbedParameterOffset(size_t Offset, SourceLocation Start,
+                         SourceLocation End)
       : Offset(Offset), PPDirectiveParameter(Start, End) {}
 };
 
@@ -35,8 +36,7 @@ class PPEmbedParameterLimit : public PPDirectiveParameter {
 public:
   size_t Limit;
 
-  PPEmbedParameterLimit(size_t Limit, SourceLocation Start,
-                   SourceLocation End)
+  PPEmbedParameterLimit(size_t Limit, SourceLocation Start, SourceLocation End)
       : Limit(Limit), PPDirectiveParameter(Start, End) {}
 };
 
@@ -47,7 +47,7 @@ public:
   SmallVector<Token, 2> Tokens;
 
   PPEmbedParameterPrefix(SmallVector<Token, 2> Tokens, SourceLocation Start,
-                   SourceLocation End)
+                         SourceLocation End)
       : Tokens(std::move(Tokens)), PPDirectiveParameter(Start, End) {}
 };
 
@@ -58,7 +58,7 @@ public:
   SmallVector<Token, 2> Tokens;
 
   PPEmbedParameterSuffix(SmallVector<Token, 2> Tokens, SourceLocation Start,
-                   SourceLocation End)
+                         SourceLocation End)
       : Tokens(std::move(Tokens)), PPDirectiveParameter(Start, End) {}
 };
 

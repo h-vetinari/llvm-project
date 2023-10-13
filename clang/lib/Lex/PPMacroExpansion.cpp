@@ -1321,7 +1321,8 @@ int Preprocessor::EvaluateHasEmbed(Token &Tok, IdentifierInfo *II) {
   SourceLocation FilenameLoc = Tok.getLocation();
   Token FilenameTok = Tok;
 
-  Preprocessor::LexEmbedParametersResult Params = this->LexEmbedParameters(Tok, true, false);
+  Preprocessor::LexEmbedParametersResult Params =
+      this->LexEmbedParameters(Tok, true, false);
   if (!Params.Successful) {
     if (Tok.isNot(tok::eod))
       this->DiscardUntilEndOfDirective();
@@ -1339,7 +1340,6 @@ int Preprocessor::EvaluateHasEmbed(Token &Tok, IdentifierInfo *II) {
     return VALUE__STDC_EMBED_NOT_FOUND__;
   }
 
-
   SmallString<128> FilenameBuffer;
   SmallString<256> RelativePath;
   StringRef Filename = this->getSpelling(FilenameTok, FilenameBuffer);
@@ -1351,11 +1351,10 @@ int Preprocessor::EvaluateHasEmbed(Token &Tok, IdentifierInfo *II) {
   assert(!Filename.empty());
   const FileEntry *LookupFromFile =
       this->getCurrentFileLexer() ? this->getCurrentFileLexer()->getFileEntry()
-                               : nullptr;
+                                  : nullptr;
   OptionalFileEntryRef MaybeFileEntry =
       this->LookupEmbedFile(FilenameLoc, Filename, isAngled, false,
-                            LookupFromFile, nullptr,
-                            &RelativePath);
+                            LookupFromFile, nullptr, &RelativePath);
   if (Callbacks) {
     Callbacks->HasEmbed(LParenLoc, Filename, isAngled, MaybeFileEntry);
   }

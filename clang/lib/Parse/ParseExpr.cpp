@@ -1059,9 +1059,9 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
                                isVectorLiteral, NotPrimaryExpression);
 
   case tok::identifier:
-  ParseIdentifier: {    // primary-expression: identifier
-                        // unqualified-id: identifier
-                        // constant: enumeration-constant
+  ParseIdentifier: { // primary-expression: identifier
+                     // unqualified-id: identifier
+                     // constant: enumeration-constant
     // Turn a potentially qualified name into a annot_typename or
     // annot_cxxscope if it would be valid.  This handles things like x::y, etc.
     if (getLangOpts().CPlusPlus) {
@@ -2915,7 +2915,7 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
       }
       const auto OnDecodeError = [&](const llvm::ErrorInfoBase &) {
         Diag(Base64Str->getExprLoc(),
-                   diag::err_builtin_pp_embed_invalid_argument)
+             diag::err_builtin_pp_embed_invalid_argument)
             << "expected a valid base64 encoded string";
       };
       llvm::Error Err = llvm::decodeBase64(Base64Str->getBytes(), BinaryData);

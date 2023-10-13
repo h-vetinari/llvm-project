@@ -1816,7 +1816,8 @@ public:
   /// Parses a simple integer literal to get its numeric value.  Floating
   /// point literals and user defined literals are rejected.  Used primarily to
   /// handle pragmas that accept integer arguments.
-  bool parseSimpleIntegerLiteral(Token &Tok, uint64_t &Value, bool WithLex = true);
+  bool parseSimpleIntegerLiteral(Token &Tok, uint64_t &Value,
+                                 bool WithLex = true);
 
   /// Disables macro expansion everywhere except for preprocessor directives.
   void SetMacroExpansionOnlyInDirectives() {
