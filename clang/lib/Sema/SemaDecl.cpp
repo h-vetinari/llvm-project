@@ -13347,8 +13347,9 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
 
     // Legitimately, in all other cases, COMPLETELY nuke the PPEmbedExpr
     // and turn it into a list of integers where applicable.
-    if (InitListExpr *ILExpr = dyn_cast_if_present<InitListExpr>(Init); ILExpr) {
-      ArrayRef<Expr*> Inits = ILExpr->inits();
+    if (InitListExpr *ILExpr = dyn_cast_if_present<InitListExpr>(Init);
+        ILExpr) {
+      ArrayRef<Expr *> Inits = ILExpr->inits();
       SmallVector<Expr *, 4> OutputExprList{};
       if (ExpandPPEmbedExprInExprList(Inits, OutputExprList, false) ==
           PPEmbedExpr::Expanded) {

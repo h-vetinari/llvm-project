@@ -5980,7 +5980,8 @@ public:
   StringRef GetLocationName(PPEmbedExprContext Context) const;
 
   bool DiagnosePPEmbedExpr(Expr *&E, SourceLocation ContextLocation,
-                           PPEmbedExprContext Context, bool SingleAllowed = true);
+                           PPEmbedExprContext Context,
+                           bool SingleAllowed = true);
 
   // Build a potentially resolved SourceLocExpr.
   ExprResult BuildSourceLocExpr(SourceLocExpr::IdentKind Kind,

@@ -4818,14 +4818,13 @@ public:
     FoundOne,
     Expanded,
   };
- 
-  PPEmbedExpr(const ASTContext &Ctx, QualType ResultTy, StringLiteral* Filename, StringLiteral* BinaryData,
-                SourceLocation BLoc, SourceLocation RParenLoc,
-                DeclContext *Context);
+
+  PPEmbedExpr(const ASTContext &Ctx, QualType ResultTy, StringLiteral *Filename,
+              StringLiteral *BinaryData, SourceLocation BLoc,
+              SourceLocation RParenLoc, DeclContext *Context);
 
   /// Build an empty call expression.
-  explicit PPEmbedExpr(EmptyShell Empty)
-      : Expr(SourceLocExprClass, Empty) {}
+  explicit PPEmbedExpr(EmptyShell Empty) : Expr(SourceLocExprClass, Empty) {}
 
   /// If the PPEmbedExpr has been resolved return the subexpression
   /// representing the resolved value. Otherwise return null.

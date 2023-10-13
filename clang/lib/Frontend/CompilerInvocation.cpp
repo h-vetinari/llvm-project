@@ -4277,7 +4277,6 @@ static void GeneratePreprocessorArgs(const PreprocessorOptions &Opts,
       continue;
 
     GenerateArg(Consumer, M.second ? OPT_U : OPT_D, M.first);
-
   }
 
   for (const auto &I : Opts.Includes) {

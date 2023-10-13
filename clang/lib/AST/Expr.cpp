@@ -2330,19 +2330,18 @@ APValue SourceLocExpr::EvaluateInContext(const ASTContext &Ctx,
 }
 
 PPEmbedExpr::PPEmbedExpr(const ASTContext &Ctx, QualType ResultTy,
-                                       StringLiteral *Filename,
-                                       StringLiteral *BinaryData,
-                                       SourceLocation BLoc,
-                                       SourceLocation RParenLoc,
-                                       DeclContext *ParentContext)
+                         StringLiteral *Filename, StringLiteral *BinaryData,
+                         SourceLocation BLoc, SourceLocation RParenLoc,
+                         DeclContext *ParentContext)
     : Expr(PPEmbedExprClass, ResultTy, VK_PRValue, OK_Ordinary),
-      BuiltinLoc(BLoc), RParenLoc(RParenLoc), ParentContext(ParentContext), Filename(Filename), BinaryData(BinaryData) {
+      BuiltinLoc(BLoc), RParenLoc(RParenLoc), ParentContext(ParentContext),
+      Filename(Filename), BinaryData(BinaryData) {
   setDependence(ExprDependence::None);
 }
 
 size_t PPEmbedExpr::getDataElementCount(ASTContext &Context) const {
-    return getDataStringLiteral()->getByteLength() /
-           (Context.getTypeSize(getType()) / Context.getTypeSize(Context.CharTy));
+  return getDataStringLiteral()->getByteLength() /
+         (Context.getTypeSize(getType()) / Context.getTypeSize(Context.CharTy));
 }
 
 InitListExpr::InitListExpr(const ASTContext &C, SourceLocation lbraceloc,
