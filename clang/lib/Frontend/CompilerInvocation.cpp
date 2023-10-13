@@ -2861,6 +2861,7 @@ static bool ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.Plugins = Args.getAllArgValues(OPT_load);
   Opts.ASTDumpDecls = Args.hasArg(OPT_ast_dump, OPT_ast_dump_EQ);
   Opts.ASTDumpAll = Args.hasArg(OPT_ast_dump_all, OPT_ast_dump_all_EQ);
+
   // Only the -fmodule-file=<file> form.
   for (const auto *A : Args.filtered(OPT_fmodule_file)) {
     StringRef Val = A->getValue();
@@ -4276,6 +4277,7 @@ static void GeneratePreprocessorArgs(const PreprocessorOptions &Opts,
       continue;
 
     GenerateArg(Consumer, M.second ? OPT_U : OPT_D, M.first);
+
   }
 
   for (const auto &I : Opts.Includes) {

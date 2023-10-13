@@ -9,7 +9,7 @@ typedef struct kitty_kitty {
 	kitty kit;
 } kitty_kitty;
 
-const int meow =
+const int meow = 
 #embed <single_byte.txt>
 ;
 

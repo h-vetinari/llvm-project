@@ -1274,7 +1274,7 @@ int Preprocessor::EvaluateHasEmbed(Token &Tok, IdentifierInfo *II) {
                                           : diag::warn_cxx26_pp_has_embed);
     Diag(Tok, EitherDiag);
   }
-
+    
   // Save the location of the current token.  If a '(' is later found, use
   // that location.  If not, use the end of this location instead.
   SourceLocation LParenLoc = Tok.getLocation();
@@ -1339,7 +1339,7 @@ int Preprocessor::EvaluateHasEmbed(Token &Tok, IdentifierInfo *II) {
     return VALUE__STDC_EMBED_NOT_FOUND__;
   }
 
-
+ 
   SmallString<128> FilenameBuffer;
   SmallString<256> RelativePath;
   StringRef Filename = this->getSpelling(FilenameTok, FilenameBuffer);
@@ -1916,7 +1916,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     // double-quotes (""), optionally followed by a series of
     // arguments similar to form like attributes.
     int Value = EvaluateHasEmbed(Tok, II);
-
+    
     if (Tok.isNot(tok::r_paren))
       return;
     OS << Value;
