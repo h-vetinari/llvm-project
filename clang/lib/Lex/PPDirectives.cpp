@@ -1444,7 +1444,7 @@ void Preprocessor::HandleDirective(Token &Result) {
     // Enter this token stream so that we re-lex the tokens.  Make sure to
     // enable macro expansion, in case the token after the # is an identifier
     // that is expanded.
-    EnterTokenStream(std::move(Toks), 2, false, /*IsReinject*/false);
+    EnterTokenStream(std::move(Toks), 2, false, /*IsReinject*/ false);
     return;
   }
 
@@ -4149,16 +4149,16 @@ void Preprocessor::HandleEmbedDirective(SourceLocation HashLoc, Token &EmbedTok,
     if (Callbacks && Callbacks->EmbedFileNotFound(OriginalFilename)) {
       return;
     }
-    Diag(FilenameTok, diag::err_pp_file_not_found)
-        << Filename;
+    Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
     return;
   }
   std::optional<int64_t> MaybeSignedLimit{};
   if (Params.MaybeLimitParam) {
     MaybeSignedLimit = static_cast<int64_t>(Params.MaybeLimitParam->Limit);
   }
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> MaybeFile = getFileManager().getBufferForFile(
-      *MaybeFileRef, false, false, MaybeSignedLimit);
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> MaybeFile =
+      getFileManager().getBufferForFile(*MaybeFileRef, false, false,
+                                        MaybeSignedLimit);
   if (!MaybeFile) {
     // could not find file
     Diag(FilenameTok, diag::err_cannot_open_file)

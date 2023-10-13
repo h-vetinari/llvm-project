@@ -997,7 +997,6 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd) {
     SkipMalformedDecl();
     return nullptr;
   }
-
   ExprResult AssertMessage;
   if (Tok.is(tok::r_paren)) {
     unsigned DiagVal;

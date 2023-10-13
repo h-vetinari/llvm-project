@@ -2435,8 +2435,7 @@ public:
   /// reference is for system \#include's or not (i.e. using <> instead of "").
   OptionalFileEntryRef
   LookupEmbedFile(SourceLocation FilenameLoc, StringRef Filename, bool isAngled,
-                  bool OpenFile,
-                  const FileEntry *LookupFromFile = nullptr,
+                  bool OpenFile, const FileEntry *LookupFromFile = nullptr,
                   SmallVectorImpl<char> *SearchPath = nullptr,
                   SmallVectorImpl<char> *RelativePath = nullptr);
 
