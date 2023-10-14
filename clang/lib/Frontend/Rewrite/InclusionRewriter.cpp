@@ -463,11 +463,11 @@ void InclusionRewriter::Process(FileID FileId,
               // Add line marker to indicate we're returning from an included
               // file.
               LineInfoExtra = " 2";
-          }
-          // fix up lineinfo (since commented out directive changed line
-          // numbers) for inclusions that were skipped due to header guards
-          WriteLineInfo(FileName, Line, FileType, LineInfoExtra);
-          break;
+            }
+            // fix up lineinfo (since commented out directive changed line
+            // numbers) for inclusions that were skipped due to header guards
+            WriteLineInfo(FileName, Line, FileType, LineInfoExtra);
+            break;
           }
           case tok::pp_pragma: {
             StringRef Identifier = NextIdentifierName(RawLex, RawToken);

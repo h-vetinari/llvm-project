@@ -4193,16 +4193,16 @@ void Preprocessor::HandleEmbedDirective(SourceLocation HashLoc, Token &EmbedTok,
     if (Callbacks && Callbacks->EmbedFileNotFound(OriginalFilename)) {
       return;
     }
-    Diag(FilenameTok, diag::err_pp_file_not_found)
-        << Filename;
+    Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
     return;
   }
   std::optional<int64_t> MaybeSignedLimit{};
   if (Params.MaybeLimitParam) {
     MaybeSignedLimit = static_cast<int64_t>(Params.MaybeLimitParam->Limit);
   }
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> MaybeFile = getFileManager().getBufferForFile(
-      *MaybeFileRef, false, false, MaybeSignedLimit);
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> MaybeFile =
+      getFileManager().getBufferForFile(*MaybeFileRef, false, false,
+                                        MaybeSignedLimit);
   if (!MaybeFile) {
     // could not find file
     Diag(FilenameTok, diag::err_cannot_open_file)
