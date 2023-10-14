@@ -1064,9 +1064,9 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
                                isVectorLiteral, NotPrimaryExpression);
 
   case tok::identifier:
-  ParseIdentifier: { // primary-expression: identifier
-                     // unqualified-id: identifier
-                     // constant: enumeration-constant
+  ParseIdentifier: {    // primary-expression: identifier
+                        // unqualified-id: identifier
+                        // constant: enumeration-constant
     // Turn a potentially qualified name into a annot_typename or
     // annot_cxxscope if it would be valid.  This handles things like x::y, etc.
     if (getLangOpts().CPlusPlus) {
