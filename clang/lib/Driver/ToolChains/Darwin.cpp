@@ -3038,7 +3038,7 @@ bool Darwin::SupportsEmbeddedBitcode() const {
 
 bool MachO::isPICDefault() const { return true; }
 
-bool MachO::isPIEDefault(const llvm::opt::ArgList &Args) const { return false; }
+bool MachO::isPIEDefault(const llvm::opt::ArgList &Args) const { return true; }
 
 bool MachO::isPICDefaultForced() const {
   return (getArch() == llvm::Triple::x86_64 ||
