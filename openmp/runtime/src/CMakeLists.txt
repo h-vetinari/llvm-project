@@ -161,6 +161,12 @@ if(OPENMP_STANDALONE_BUILD OR (NOT OPENMP_ENABLE_LIBOMP_PROFILING))
   add_library(omp ${LIBOMP_LIBRARY_KIND} ${LIBOMP_SOURCE_FILES})
   # Linking command will include libraries in LIBOMP_CONFIGURED_LIBFLAGS
   target_link_libraries(omp ${LIBOMP_CONFIGURED_LIBFLAGS} ${LIBOMP_DL_LIBS})
+  if(APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+    cmake_path(SET CLANG_RT_BUILTINS_LIBRARY
+               NORMALIZE
+               "$ENV{PREFIX}/lib/clang/$ENV{PKG_VERSION_MAJOR}/lib/libclang_rt.builtins_arm64_osx.a")
+    target_link_libraries(omp ${CLANG_RT_BUILTINS_LIBRARY})
+  endif()
 else()
   add_llvm_library(omp ${LIBOMP_LIBRARY_KIND} ${LIBOMP_SOURCE_FILES} PARTIAL_SOURCES_INTENDED
     LINK_LIBS ${LIBOMP_CONFIGURED_LIBFLAGS} ${LIBOMP_DL_LIBS}
