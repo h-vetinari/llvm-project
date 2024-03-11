@@ -432,6 +432,25 @@ void RocmInstallationDetector::detectDeviceLibrary() {
   if (HasDeviceLibrary)
     return;
 
+  // Find device libraries in <LLVM_DIR>/lib/amdgcn/bitcode
+  LibDevicePath = D.getInstalledDir();;
+  llvm::sys::path::append(LibDevicePath, CLANG_INSTALL_LIBDIR_BASENAME,
+                          "amdgcn", "bitcode");
+  HasDeviceLibrary = CheckDeviceLib(LibDevicePath, true);
+  if (HasDeviceLibrary)
+    return;
+
+  // Find device libraries in the real path of the invoked clang, resolving symbolic
+  // link of clang itself.
+  llvm::SmallString<256> RealClangPath;
+  llvm::sys::fs::real_path(D.getClangProgramPath(), RealClangPath);
+  LibDevicePath = llvm::sys::path::parent_path(RealClangPath);
+  llvm::sys::path::append(LibDevicePath, CLANG_INSTALL_LIBDIR_BASENAME,
+                          "amdgcn", "bitcode");
+  HasDeviceLibrary = CheckDeviceLib(LibDevicePath, true);
+  if (HasDeviceLibrary)
+    return;
+
   // Find device libraries in a legacy ROCm directory structure
   // ${ROCM_ROOT}/amdgcn/bitcode/*
   auto &ROCmDirs = getInstallationPathCandidates();
