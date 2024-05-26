@@ -180,7 +180,8 @@ set_target_properties(unwind_shared
   PROPERTIES
     EXCLUDE_FROM_ALL "$<IF:$<BOOL:${LIBUNWIND_ENABLE_SHARED}>,FALSE,TRUE>"
     LINK_FLAGS "${LIBUNWIND_LINK_FLAGS}"
-    LINKER_LANGUAGE C
+    # changed from C due to https://github.com/llvm/llvm-project/issues/90332
+    LINKER_LANGUAGE CXX
     OUTPUT_NAME "${LIBUNWIND_SHARED_OUTPUT_NAME}"
     VERSION     "${LIBUNWIND_LIBRARY_VERSION}"
     SOVERSION   "1"
@@ -227,7 +228,8 @@ set_target_properties(unwind_static
   PROPERTIES
     EXCLUDE_FROM_ALL "$<IF:$<BOOL:${LIBUNWIND_ENABLE_STATIC}>,FALSE,TRUE>"
     LINK_FLAGS "${LIBUNWIND_LINK_FLAGS}"
-    LINKER_LANGUAGE C
+    # changed from C due to https://github.com/llvm/llvm-project/issues/90332
+    LINKER_LANGUAGE CXX
     OUTPUT_NAME "${LIBUNWIND_STATIC_OUTPUT_NAME}"
 )
 
