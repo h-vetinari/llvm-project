@@ -352,8 +352,8 @@
 // These macros controls the availability of __cxa_init_primary_exception
 // in the built library, which std::make_exception_ptr might use
 // (see libcxx/include/__exception/exception_ptr.h).
-#define _LIBCPP_AVAILABILITY_HAS_INIT_PRIMARY_EXCEPTION _LIBCPP_INTRODUCED_IN_LLVM_18
-#define _LIBCPP_AVAILABILITY_INIT_PRIMARY_EXCEPTION _LIBCPP_INTRODUCED_IN_LLVM_18_ATTRIBUTE
+#define _LIBCPP_AVAILABILITY_HAS_INIT_PRIMARY_EXCEPTION 0
+#define _LIBCPP_AVAILABILITY_INIT_PRIMARY_EXCEPTION /* nothing */
 
 // This controls the availability of C++23 <print>, which
 // has a dependency on the built library (it needs access to
