@@ -120,8 +120,11 @@ if(FUCHSIA)
   set(LIBUNWIND_HAS_DL_LIB NO)
   set(LIBUNWIND_HAS_PTHREAD_LIB NO)
 else()
-  check_library_exists(dl dladdr "" LIBUNWIND_HAS_DL_LIB)
-  check_library_exists(pthread pthread_once "" LIBUNWIND_HAS_PTHREAD_LIB)
+  # misdetected due to https://github.com/llvm/llvm-project/issues/90332
+  # check_library_exists(dl dladdr "" LIBUNWIND_HAS_DL_LIB)
+  # check_library_exists(pthread pthread_once "" LIBUNWIND_HAS_PTHREAD_LIB)
+  set(LIBUNWIND_HAS_DL_LIB YES)
+  set(LIBUNWIND_HAS_PTHREAD_LIB YES)
 endif()
 
 if(HAIKU)
