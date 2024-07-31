@@ -15,6 +15,10 @@
 #include <stdexcept>
 #include <string>
 
+#include <dlfcn.h>  // dladdr
+#include <cstdlib>  // free, malloc, realpath
+#include <cstring>  // memcpy, strlen
+
 #include "include/tzdb/time_zone_private.h"
 #include "include/tzdb/types_private.h"
 #include "include/tzdb/tzdb_list_private.h"
@@ -48,7 +52,44 @@ namespace chrono {
 // This function is weak so it can be overriden in the tests. The
 // declaration is in the test header test/support/test_tzdb.h
 _LIBCPP_WEAK string_view __libcpp_tzdb_directory() {
-#if defined(__linux__)
+#ifdef _CF_LIBCXX_SHARED
+  // get path to library we're in ($PREFIX/lib/lidc++.dylib),
+  // to determine our location relative to $PREFIX; with help
+  // from the MIT-licensed https://github.com/gpakosz/whereami
+  void* addr = __builtin_extract_return_addr(__builtin_return_address(0));
+  char* this_lib;
+  int i;
+  static std::string tz_dir;
+  if (!tz_dir.empty()) {
+    return tz_dir.c_str();
+  }
+
+  char buffer[PATH_MAX];
+  Dl_info info;
+
+  if (dladdr(addr, &info)) {
+    char* resolved = realpath(info.dli_fname, buffer);
+    if (resolved) {
+      int total_length = (int)strlen(resolved);
+      this_lib = (char*)malloc(total_length + 1);
+      memcpy(this_lib, resolved, total_length);
+      for (i = (int)total_length - 1; i >= 0; --i) {
+        if (this_lib[i] == '/') {
+          // set to null byte so the string ends before the basename
+          this_lib[i] = '\0';
+          break;
+        }
+      }
+      tz_dir = {this_lib};
+      tz_dir += "/..";
+      tz_dir += "/share/zoneinfo";
+      // std::string constructor for tz_dir deep-copies
+      free(this_lib);
+    }
+  }
+  // by default, libcxx compiles with -Werror=return-type, so put this here
+  return tz_dir.c_str();
+#elif defined(__linux__)
   return "/usr/share/zoneinfo/";
 #else
 #  error "unknown path to the IANA Time Zone Database"

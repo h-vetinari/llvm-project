@@ -208,9 +208,14 @@ if (LIBCXX_ENABLE_SHARED)
       OUTPUT_NAME   "${LIBCXX_SHARED_OUTPUT_NAME}"
       VERSION       "${LIBCXX_LIBRARY_VERSION}"
       SOVERSION     "${LIBCXX_ABI_VERSION}"
-      DEFINE_SYMBOL ""
+      DEFINE_SYMBOL "_CF_LIBCXX_SHARED"
   )
   cxx_add_common_build_flags(cxx_shared)
+
+  # for tzdb implementation
+  target_compile_definitions(cxx_shared INTERFACE "_CF_LIBCXX_SHARED")
+  # we want to link libdl statically, see https://stackoverflow.com/a/74520425
+  target_link_options(cxx_shared PRIVATE libdl.a)
 
   if(ZOS)
     add_custom_command(TARGET cxx_shared POST_BUILD

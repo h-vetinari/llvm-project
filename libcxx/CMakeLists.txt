@@ -108,19 +108,11 @@ option(LIBCXX_ENABLE_WIDE_CHARACTERS
 # database installed. Libc++ will fail to build if this is enabled on a
 # platform that does not provide the IANA database. The default is set to the
 # current implementation state on the different platforms.
-#
-# TODO TZDB make the default always ON when most platforms ship with the IANA
-# database.
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(ENABLE_TIME_ZONE_DATABASE_DEFAULT ON)
-else()
-  set(ENABLE_TIME_ZONE_DATABASE_DEFAULT OFF)
-endif()
 option(LIBCXX_ENABLE_TIME_ZONE_DATABASE
   "Whether to include support for time zones in the library. Disabling
   time zone support can be useful when porting to platforms that don't
   ship the IANA time zone database. When time zones are not supported,
-  time zone support in <chrono> will be disabled." ${ENABLE_TIME_ZONE_DATABASE_DEFAULT})
+  time zone support in <chrono> will be disabled." ON)
 option(LIBCXX_ENABLE_VENDOR_AVAILABILITY_ANNOTATIONS
   "Whether to turn on vendor availability annotations on declarations that depend
    on definitions in a shared library. By default, we assume that we're not building
