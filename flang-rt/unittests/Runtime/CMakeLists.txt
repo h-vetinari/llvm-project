@@ -6,7 +6,7 @@
 #
 #===------------------------------------------------------------------------===#
 
-add_flang_unittest(FlangRuntimeTests
+add_flangrt_unittest(RuntimeTests
   AccessTest.cpp
   Allocatable.cpp
   ArrayConstructor.cpp
@@ -37,13 +37,12 @@ add_flang_unittest(FlangRuntimeTests
   Time.cpp
   TemporaryStack.cpp
   Transformational.cpp
+
+  LINK_LIBS
+    flang_rt.unittest
 )
+target_compile_definitions(RuntimeTests PRIVATE NOT_EXE="${LLVM_TOOLS_DIR}/not${CMAKE_EXECUTABLE_SUFFIX}")
 
-target_link_libraries(FlangRuntimeTests
-  PRIVATE
-  FortranRuntime
-)
-
-target_compile_definitions(FlangRuntimeTests PRIVATE NOT_EXE="$<TARGET_FILE:not>")
-
-add_subdirectory(CUDA)
+if (FLANG_RT_ENABLE_CUF)
+  add_subdirectory(CUDA)
+endif ()
