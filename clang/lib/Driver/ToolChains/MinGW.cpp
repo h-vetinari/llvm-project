@@ -540,6 +540,10 @@ toolchains::MinGW::MinGW(const Driver &D, const llvm::Triple &Triple,
   getFilePaths().push_back(
       (Base + SubdirName + llvm::sys::path::get_separator() + "mingw/lib").str());
 
+  // Conda
+  getFilePaths().push_back(
+      (Base + SubdirName + llvm::sys::path::get_separator() + "sysroot/usr/lib").str());
+
   // Only include <base>/lib if we're not cross compiling (not even for
   // windows->windows to a different arch), or if the sysroot has been set
   // (where we presume the user has pointed it at an arch specific
@@ -705,6 +709,10 @@ void toolchains::MinGW::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   // Gentoo
   addSystemInclude(DriverArgs, CC1Args,
                    Base + SubdirName + llvm::sys::path::get_separator() + "usr/include");
+
+  // Conda
+  addSystemInclude(DriverArgs, CC1Args,
+                   Base + SubdirName + llvm::sys::path::get_separator() + "sysroot/usr/include");
 
   // Only include <base>/include if we're not cross compiling (but do allow it
   // if we're on Windows and building for Windows on another architecture),
