@@ -28,7 +28,7 @@ static llvm::Expected<bool> *g_fcxx_modules_workaround [[maybe_unused]];
 // need to ensure this doesn't happen.  At the same time, Python.h will also try
 // to redefine a bunch of stuff that PosixApi.h defines.  So define it all now
 // so that PosixApi.h doesn't redefine it.
-#define NO_PID_T
+// #define NO_PID_T
 #endif
 #if defined(__linux__)
 // features.h will define _POSIX_C_SOURCE if _GNU_SOURCE is defined.  This value
